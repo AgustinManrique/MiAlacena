@@ -9,15 +9,6 @@ export const authService = {
     });
     if (error) throw error;
 
-    if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        email,
-        full_name: fullName,
-        avatar_url: null,
-      });
-    }
-
     return data;
   },
 

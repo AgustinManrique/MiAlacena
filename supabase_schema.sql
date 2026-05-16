@@ -1,11 +1,13 @@
--- HogarStock - Schema SQL para Supabase
--- Ejecutar en el SQL Editor de Supabase
+-- HogarStock - Schema SQL completo para Supabase
+-- Este script es idempotente: puede reejecutarse sin errores.
 
--- Extensión para UUIDs
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Tabla de perfiles (vinculada a auth.users)
-CREATE TABLE profiles (
+-- ============================================================
+-- TABLAS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT NOT NULL,
@@ -13,8 +15,7 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de casas
-CREATE TABLE houses (
+CREATE TABLE IF NOT EXISTS houses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   invite_code TEXT UNIQUE NOT NULL,
@@ -22,8 +23,7 @@ CREATE TABLE houses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de miembros de casa
-CREATE TABLE house_members (
+CREATE TABLE IF NOT EXISTS house_members (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   house_id UUID REFERENCES houses(id) ON DELETE CASCADE,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
@@ -32,8 +32,7 @@ CREATE TABLE house_members (
   UNIQUE(house_id, user_id)
 );
 
--- Tabla de categorías
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   house_id UUID REFERENCES houses(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
@@ -42,8 +41,7 @@ CREATE TABLE categories (
   "order" INT NOT NULL DEFAULT 0
 );
 
--- Tabla de productos
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   house_id UUID REFERENCES houses(id) ON DELETE CASCADE,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
@@ -60,8 +58,7 @@ CREATE TABLE products (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Tabla de items de compras
-CREATE TABLE shopping_items (
+CREATE TABLE IF NOT EXISTS shopping_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   house_id UUID REFERENCES houses(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE SET NULL,
@@ -76,106 +73,220 @@ CREATE TABLE shopping_items (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Índices para performance
-CREATE INDEX idx_house_members_user ON house_members(user_id);
-CREATE INDEX idx_house_members_house ON house_members(house_id);
-CREATE INDEX idx_products_house ON products(house_id);
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_status ON products(status);
-CREATE INDEX idx_shopping_items_house ON shopping_items(house_id);
-CREATE INDEX idx_shopping_items_purchased ON shopping_items(is_purchased);
-CREATE INDEX idx_categories_house ON categories(house_id);
+CREATE TABLE IF NOT EXISTS todos (
+  id BIGSERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Row Level Security (RLS)
+-- ============================================================
+-- ÍNDICES
+-- ============================================================
+
+CREATE INDEX IF NOT EXISTS idx_house_members_user ON house_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_house_members_house ON house_members(house_id);
+CREATE INDEX IF NOT EXISTS idx_products_house ON products(house_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+CREATE INDEX IF NOT EXISTS idx_shopping_items_house ON shopping_items(house_id);
+CREATE INDEX IF NOT EXISTS idx_shopping_items_purchased ON shopping_items(is_purchased);
+CREATE INDEX IF NOT EXISTS idx_categories_house ON categories(house_id);
+
+-- ============================================================
+-- ROW LEVEL SECURITY
+-- ============================================================
+
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE houses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE house_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 
--- Políticas de seguridad: profiles
+-- ============================================================
+-- FUNCIONES AUXILIARES
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION is_house_member(target_house_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM house_members
+    WHERE house_id = target_house_id AND user_id = auth.uid()
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION is_house_admin(target_house_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM house_members
+    WHERE house_id = target_house_id AND user_id = auth.uid() AND role = 'admin'
+  );
+END;
+$$;
+
+-- ============================================================
+-- POLICIES: profiles
+-- ============================================================
+
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Políticas de seguridad: houses (los miembros pueden ver)
+-- ============================================================
+-- POLICIES: houses
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view their houses" ON houses;
 CREATE POLICY "Members can view their houses"
   ON houses FOR SELECT USING (
     id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Authenticated users can create houses" ON houses;
 CREATE POLICY "Authenticated users can create houses"
-  ON houses FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+  ON houses FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND owner_id = auth.uid());
 
--- Políticas de seguridad: house_members
+-- ============================================================
+-- POLICIES: house_members
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view house members" ON house_members;
 CREATE POLICY "Members can view house members"
   ON house_members FOR SELECT USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
+    is_house_member(house_id)
   );
 
+DROP POLICY IF EXISTS "Users can join houses" ON house_members;
 CREATE POLICY "Users can join houses"
   ON house_members FOR INSERT WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins can remove members" ON house_members;
 CREATE POLICY "Admins can remove members"
   ON house_members FOR DELETE USING (
-    house_id IN (
-      SELECT house_id FROM house_members WHERE user_id = auth.uid() AND role = 'admin'
-    )
+    is_house_admin(house_id)
   );
 
--- Políticas de seguridad: categories
+-- ============================================================
+-- POLICIES: categories
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view categories" ON categories;
 CREATE POLICY "Members can view categories"
-  ON categories FOR SELECT USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+  ON categories FOR SELECT USING (is_house_member(house_id));
 
+DROP POLICY IF EXISTS "Members can manage categories" ON categories;
 CREATE POLICY "Members can manage categories"
-  ON categories FOR INSERT WITH CHECK (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+  ON categories FOR INSERT WITH CHECK (is_house_member(house_id));
 
--- Políticas de seguridad: products
+DROP POLICY IF EXISTS "Members can update categories" ON categories;
+CREATE POLICY "Members can update categories"
+  ON categories FOR UPDATE USING (is_house_member(house_id));
+
+DROP POLICY IF EXISTS "Members can delete categories" ON categories;
+CREATE POLICY "Members can delete categories"
+  ON categories FOR DELETE USING (is_house_member(house_id));
+
+-- ============================================================
+-- POLICIES: products
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view products" ON products;
 CREATE POLICY "Members can view products"
-  ON products FOR SELECT USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+  ON products FOR SELECT USING (is_house_member(house_id));
 
-CREATE POLICY "Members can manage products"
-  ON products FOR ALL USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+DROP POLICY IF EXISTS "Members can insert products" ON products;
+CREATE POLICY "Members can insert products"
+  ON products FOR INSERT WITH CHECK (is_house_member(house_id));
 
--- Políticas de seguridad: shopping_items
+DROP POLICY IF EXISTS "Members can update products" ON products;
+CREATE POLICY "Members can update products"
+  ON products FOR UPDATE USING (is_house_member(house_id));
+
+DROP POLICY IF EXISTS "Members can delete products" ON products;
+CREATE POLICY "Members can delete products"
+  ON products FOR DELETE USING (is_house_member(house_id));
+
+-- ============================================================
+-- POLICIES: shopping_items
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view shopping items" ON shopping_items;
 CREATE POLICY "Members can view shopping items"
-  ON shopping_items FOR SELECT USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+  ON shopping_items FOR SELECT USING (is_house_member(house_id));
 
-CREATE POLICY "Members can manage shopping items"
-  ON shopping_items FOR ALL USING (
-    house_id IN (SELECT house_id FROM house_members WHERE user_id = auth.uid())
-  );
+DROP POLICY IF EXISTS "Members can insert shopping items" ON shopping_items;
+CREATE POLICY "Members can insert shopping items"
+  ON shopping_items FOR INSERT WITH CHECK (is_house_member(house_id));
 
--- Trigger para crear perfil al registrarse
+DROP POLICY IF EXISTS "Members can update shopping items" ON shopping_items;
+CREATE POLICY "Members can update shopping items"
+  ON shopping_items FOR UPDATE USING (is_house_member(house_id));
+
+DROP POLICY IF EXISTS "Members can delete shopping items" ON shopping_items;
+CREATE POLICY "Members can delete shopping items"
+  ON shopping_items FOR DELETE USING (is_house_member(house_id));
+
+-- ============================================================
+-- POLICIES: todos (lectura pública)
+-- ============================================================
+
+DROP POLICY IF EXISTS "Public read access" ON todos;
+CREATE POLICY "Public read access"
+  ON todos FOR SELECT USING (true);
+
+-- ============================================================
+-- DATOS INICIALES
+-- ============================================================
+
+INSERT INTO todos (name)
+SELECT 'Conexión Supabase OK'
+WHERE NOT EXISTS (SELECT 1 FROM todos);
+
+-- ============================================================
+-- TRIGGER: crear perfil automáticamente al registrarse
+-- ============================================================
+
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   INSERT INTO profiles (id, email, full_name)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', 'Usuario')
-  );
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = EXCLUDED.full_name;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
