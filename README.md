@@ -1,4 +1,4 @@
-# HogarStock
+# MiAlacena
 
 Aplicación móvil colaborativa para gestión de inventario doméstico e inteligencia de compras en tiempo real.
 
@@ -36,39 +36,46 @@ Eliminar la incertidumbre sobre productos disponibles en el hogar y evitar compr
 ## Arquitectura
 
 ```
-src/
-├── types/              # Interfaces y tipos TypeScript
-│   └── index.ts
-├── config/             # Configuración de Supabase y constantes
-│   ├── supabase.ts
-│   └── constants.ts
-├── services/           # Capa de acceso a datos (Supabase queries)
-│   ├── auth.service.ts
-│   ├── house.service.ts
-│   ├── product.service.ts
-│   ├── category.service.ts
-│   └── shopping.service.ts
-├── stores/             # Estado global (Zustand)
-│   ├── auth.store.ts
-│   ├── house.store.ts
-│   ├── product.store.ts
-│   └── shopping.store.ts
-├── components/         # Componentes reutilizables
-│   ├── ui/             # Design system (Button, Input, Card, etc.)
-│   ├── inventory/      # Componentes de inventario
-│   └── shopping/       # Componentes de lista de compras
-├── screens/            # Pantallas organizadas por feature
-│   ├── auth/
-│   ├── home/
-│   ├── inventory/
-│   ├── shopping/
-│   └── profile/
-├── navigation/         # Navegación (Root + Tabs)
-│   ├── RootNavigator.tsx
-│   └── MainTabs.tsx
-├── theme/              # Design tokens (colores, spacing, tipografía)
-│   └── index.ts
-└── utils/              # Utilidades generales
+MiAlacena/
+├── src/
+│   ├── types/              # Interfaces y tipos TypeScript
+│   │   └── index.ts
+│   ├── config/             # Configuración (supabase.ts re-exporta desde utils/)
+│   │   ├── supabase.ts
+│   │   └── constants.ts
+│   ├── services/           # Capa de acceso a datos (Supabase queries)
+│   │   ├── auth.service.ts
+│   │   ├── house.service.ts
+│   │   ├── product.service.ts
+│   │   ├── category.service.ts
+│   │   └── shopping.service.ts
+│   ├── stores/             # Estado global (Zustand)
+│   │   ├── auth.store.ts
+│   │   ├── house.store.ts
+│   │   ├── product.store.ts
+│   │   └── shopping.store.ts
+│   ├── components/         # Componentes reutilizables
+│   │   ├── ui/             # Design system (Button, Input, Card, etc.)
+│   │   ├── inventory/      # Componentes de inventario
+│   │   └── shopping/       # Componentes de lista de compras
+│   ├── screens/            # Pantallas organizadas por feature
+│   │   ├── auth/
+│   │   ├── home/
+│   │   ├── inventory/
+│   │   ├── shopping/
+│   │   └── profile/
+│   ├── navigation/         # Navegación (Root + Tabs)
+│   │   ├── RootNavigator.tsx
+│   │   └── MainTabs.tsx
+│   ├── theme/              # Design tokens (colores, spacing, tipografía)
+│   │   └── index.ts
+│   └── utils/              # Utilidades generales
+├── utils/                  # Utilidades compartidas (cliente Supabase, helpers)
+│   └── supabase.ts
+├── docs/                   # Documentación extendida
+├── supabase_schema.sql     # Schema SQL para inicializar la base de datos
+├── .env                    # Variables de entorno (no commitear)
+└── ...
 ```
 
 ### Justificación Arquitectónica
@@ -110,152 +117,6 @@ src/
 
 ---
 
-## Navegación
-
-```
-Auth Flow:
-  Login → Register (ida y vuelta)
-
-House Setup:
-  Elegir → Crear Casa / Unirse con código
-
-Main (Tabs):
-  Inicio | Alacena | Compras | Perfil
-
-Stack adicional:
-  Alacena → AddProduct
-  Alacena → ProductDetail → EditProduct
-```
-
----
-
-## User Stories (Entrega 1)
-
-### US-001: Registro de usuario
-**Como** nuevo usuario  
-**Quiero** crear una cuenta con email y contraseña  
-**Para** acceder a la aplicación  
-
-**Criterios de aceptación:**
-- El formulario valida email, contraseña (mín 6 chars) y nombre
-- Se muestra error descriptivo si el registro falla
-- Al registrarse exitosamente, se crea el perfil automáticamente
-
-### US-002: Inicio de sesión
-**Como** usuario registrado  
-**Quiero** iniciar sesión con mis credenciales  
-**Para** acceder a mi hogar  
-
-**Criterios de aceptación:**
-- Login con email y contraseña
-- Sesión persistente (no requiere login cada vez)
-- Error descriptivo si las credenciales son incorrectas
-
-### US-003: Crear casa
-**Como** usuario autenticado sin casa  
-**Quiero** crear un nuevo hogar  
-**Para** empezar a gestionar mi inventario  
-
-**Criterios de aceptación:**
-- Se ingresa nombre de la casa
-- Se genera código de invitación alfanumérico automáticamente
-- El creador obtiene rol "admin"
-- Se crean categorías por defecto
-
-### US-004: Unirse a una casa
-**Como** usuario autenticado  
-**Quiero** unirme a una casa existente con un código  
-**Para** colaborar en el inventario compartido  
-
-**Criterios de aceptación:**
-- Se ingresa código de invitación
-- Validación de código existente
-- El usuario se une como "miembro"
-- Error si ya es miembro o el código es inválido
-
-### US-005: Ver dashboard
-**Como** miembro de una casa  
-**Quiero** ver un resumen del estado del hogar  
-**Para** conocer rápidamente qué necesito  
-
-**Criterios de aceptación:**
-- Muestra total de productos, stock bajo y agotados
-- Lista de productos agotados con detalle
-- Cantidad de items pendientes en lista de compras
-- Pull-to-refresh para actualizar datos
-
-### US-006: Gestionar inventario
-**Como** miembro de una casa  
-**Quiero** agregar, editar y eliminar productos  
-**Para** mantener el inventario actualizado  
-
-**Criterios de aceptación:**
-- Agregar producto con nombre, categoría, cantidad, unidad y stock mínimo
-- Incrementar/decrementar cantidad desde la lista
-- Ver detalle completo del producto
-- Eliminar producto con confirmación
-- Filtrar por categoría
-
-### US-007: Gestionar lista de compras
-**Como** miembro de una casa  
-**Quiero** agregar productos a la lista y marcarlos como comprados  
-**Para** coordinar las compras del hogar  
-
-**Criterios de aceptación:**
-- Agregar items manualmente con nombre
-- Marcar/desmarcar items como comprados
-- Eliminar items individuales
-- Limpiar todos los items comprados
-- Badge en tab con cantidad pendiente
-
-### US-008: Ver y compartir código
-**Como** admin de una casa  
-**Quiero** ver y compartir el código de invitación  
-**Para** invitar a otros miembros  
-
-**Criterios de aceptación:**
-- Código visible en perfil
-- Botón para compartir vía Share nativo
-- Muestra lista de miembros actuales
-
----
-
-## Entregas
-
-### Entrega 1 (Actual)
-- [x] Arquitectura modular y escalable
-- [x] Sistema de tipos TypeScript completo
-- [x] Autenticación (registro + login)
-- [x] Creación/unión a casas con código de invitación
-- [x] Inventario básico (CRUD de productos)
-- [x] Categorías con íconos
-- [x] Sistema de estados (OK/Bajo/Agotado)
-- [x] Lista de compras manual
-- [x] Dashboard con resumen
-- [x] Navegación completa (Stack + Tabs)
-- [x] Design system (Button, Input, Card, StatusBadge, EmptyState)
-- [x] Schema SQL con RLS
-- [x] Documentación técnica
-
-### Entrega 2 (Pendiente)
-- [ ] Lista de compras inteligente (auto-agregar productos con stock bajo)
-- [ ] Sincronización en tiempo real (Supabase Realtime)
-- [ ] Mejoras UX/UI (animaciones, transiciones)
-- [ ] Persistencia offline con sync
-- [ ] Edición de productos
-- [ ] Gestión de miembros (admin)
-
-### Entrega 3 (Pendiente)
-- [ ] Escáner de código de barras (EAN/UPC)
-- [ ] Estadísticas de consumo
-- [ ] Sistema de recetas inteligentes
-- [ ] Notificaciones push
-- [ ] Testing (unit + integration)
-- [ ] Optimización de performance
-- [ ] Release candidate
-
----
-
 ## Setup
 
 ### Requisitos
@@ -279,33 +140,6 @@ npm install
 # Ejecutar
 npx expo start
 ```
-
----
-
-## Design System
-
-### Paleta de Colores
-
-| Token | Hex | Uso |
-|---|---|---|
-| Primary | `#4CAF50` | Acciones principales, estados OK |
-| Secondary | `#FF9800` | Acciones secundarias, stock bajo |
-| Error | `#F44336` | Errores, productos agotados |
-| Background | `#F5F5F5` | Fondo general |
-| Surface | `#FFFFFF` | Cards y contenedores |
-| Text | `#212121` | Texto principal |
-| TextSecondary | `#757575` | Texto secundario |
-
-### Componentes
-
-- **Button**: primary, secondary, outline, ghost (sm, md, lg)
-- **Input**: Con label, error, focus state
-- **Card**: Contenedor con sombra y border radius
-- **StatusBadge**: OK (verde), Bajo (naranja), Agotado (rojo)
-- **EmptyState**: Ícono + título + descripción + CTA
-- **ProductCard**: Card de producto con controles de cantidad
-- **CategoryFilter**: Scroll horizontal con chips de categoría
-- **ShoppingItemCard**: Item con checkbox y acción de eliminar
 
 ---
 
