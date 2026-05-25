@@ -120,26 +120,44 @@ MiAlacena/
 ## Setup
 
 ### Requisitos
-- Node.js >= 18
-- npm o yarn
-- Expo CLI
+- **Node.js 20 LTS**
 - Cuenta en [Supabase](https://supabase.com)
 
 ### Instalación
 
 ```bash
-# Clonar e instalar
-cd hogarstock
+# 1. Clonar e instalar dependencias
 npm install
 
-# Configurar Supabase
-# 1. Crear proyecto en supabase.com
-# 2. Ejecutar supabase_schema.sql en SQL Editor
-# 3. Copiar URL y anon key en src/config/supabase.ts
+# 2. Crear proyecto en supabase.com y ejecutar supabase_schema.sql en SQL Editor
 
-# Ejecutar
-npx expo start
+# 3. Crear archivo .env con las credenciales
+echo 'EXPO_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co' > .env
+echo 'EXPO_PUBLIC_SUPABASE_KEY=tu-anon-key' >> .env
+
+# 4. Ejecutar
+npx expo start           # QR para Expo Go en el celular
+npx expo start --web     # Navegador en http://localhost:8081
 ```
+
+---
+
+## Solución de Problemas
+
+### Error: "AsyncStorageError: Native module is null"
+Las dependencias fueron pineadas para evitarlo. Si aparece, asegurate de haber ejecutado `npm install` limpio:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+---
+
+## Documentación Extendida
+
+- [Historias de Usuario](docs/user-stories.md)
+- [Roadmap / Entregas](docs/roadmap.md)
+- [Design System](docs/design-system.md)
 
 ---
 
