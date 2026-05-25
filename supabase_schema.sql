@@ -108,33 +108,36 @@ ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 -- FUNCIONES AUXILIARES
 -- ============================================================
 
-CREATE OR REPLACE FUNCTION is_house_member(target_house_id UUID)
+CREATE OR REPLACE FUNCTION public.is_house_member(target_house_id UUID)
 RETURNS BOOLEAN
-LANGUAGE plpgsql
+LANGUAGE sql
 SECURITY DEFINER
+STABLE
 SET search_path = public
 AS $$
-BEGIN
-  RETURN EXISTS (
+  SELECT EXISTS (
     SELECT 1 FROM house_members
     WHERE house_id = target_house_id AND user_id = auth.uid()
   );
-END;
 $$;
 
-CREATE OR REPLACE FUNCTION is_house_admin(target_house_id UUID)
+CREATE OR REPLACE FUNCTION public.is_house_admin(target_house_id UUID)
 RETURNS BOOLEAN
-LANGUAGE plpgsql
+LANGUAGE sql
 SECURITY DEFINER
+STABLE
 SET search_path = public
 AS $$
-BEGIN
-  RETURN EXISTS (
+  SELECT EXISTS (
     SELECT 1 FROM house_members
-    WHERE house_id = target_house_id AND user_id = auth.uid() AND role = 'admin'
+    WHERE house_id = target_house_id
+      AND user_id = auth.uid()
+      AND role = 'admin'
   );
-END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.is_house_member(UUID) TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.is_house_admin(UUID)  TO authenticated, anon;
 
 -- ============================================================
 -- POLICIES: profiles
@@ -171,10 +174,10 @@ CREATE POLICY "Authenticated users can create houses"
 -- ============================================================
 
 DROP POLICY IF EXISTS "Members can view house members" ON house_members;
-CREATE POLICY "Members can view house members"
-  ON house_members FOR SELECT USING (
-    is_house_member(house_id)
-  );
+DROP POLICY IF EXISTS "Users can view own memberships" ON house_members;
+CREATE POLICY "Users can view own memberships"
+  ON house_members FOR SELECT
+  USING (user_id = auth.uid());
 
 DROP POLICY IF EXISTS "Users can join houses" ON house_members;
 CREATE POLICY "Users can join houses"
