@@ -40,7 +40,7 @@ export function ProfileScreen() {
     if (!currentHouse) return;
     try {
       await Share.share({
-        message: `Unite a mi casa "${currentHouse.name}" en HogarStock con el código: ${currentHouse.invite_code}`,
+        message: `Unite a mi casa "${currentHouse.name}" en MiAlacena con el código: ${currentHouse.invite_code}`,
       });
     } catch {}
   };
