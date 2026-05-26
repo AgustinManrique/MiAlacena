@@ -61,7 +61,7 @@ export function RegisterScreen({ navigation }: Props) {
         <View style={styles.header}>
           <Text style={styles.logo}>🏠</Text>
           <Text style={styles.title}>Crear Cuenta</Text>
-          <Text style={styles.subtitle}>Unite a HogarStock</Text>
+          <Text style={styles.subtitle}>Unite a MiAlacena</Text>
         </View>
 
         <View style={styles.form}>

@@ -49,7 +49,7 @@ export function LoginScreen({ navigation }: Props) {
       >
         <View style={styles.header}>
           <Text style={styles.logo}>🏠</Text>
-          <Text style={styles.title}>HogarStock</Text>
+          <Text style={styles.title}>MiAlacena</Text>
           <Text style={styles.subtitle}>Tu alacena digital</Text>
         </View>
 

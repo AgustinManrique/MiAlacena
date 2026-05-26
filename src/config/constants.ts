@@ -1,4 +1,4 @@
-export const APP_NAME = 'HogarStock';
+export const APP_NAME = 'MiAlacena';
 
 export const DEFAULT_CATEGORIES = [
   { name: 'Lácteos', icon: '🥛', color: '#BBDEFB' },
