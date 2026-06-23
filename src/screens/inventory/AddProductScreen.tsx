@@ -15,6 +15,7 @@ import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { UNITS_OF_MEASURE } from '../../config/constants';
 import { colors, fontSize, spacing, borderRadius } from '../../theme';
+import { validateProductForm } from '../../utils/validation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddProduct'>;
 
@@ -33,8 +34,9 @@ export function AddProductScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Ingresá el nombre del producto');
+    const errors = validateProductForm({ name, quantity, minStock, unit });
+    if (errors.length > 0) {
+      Alert.alert('Error', errors.join('\n'));
       return;
     }
     if (!currentHouse || !session) return;
