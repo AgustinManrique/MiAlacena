@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   View,
   FlatList,
@@ -14,13 +14,17 @@ import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { ProductCard } from '../../components/inventory/ProductCard';
 import { CategoryFilter } from '../../components/inventory/CategoryFilter';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, SearchBar } from '../../components/ui';
 import { colors, spacing, shadows, borderRadius } from '../../theme';
+
+const normalize = (str: string): string =>
+  str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 export function InventoryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentHouse = useHouseStore((s) => s.currentHouse);
   const {
+    products,
     categories,
     filter,
     isLoading,
@@ -28,10 +32,9 @@ export function InventoryScreen() {
     loadCategories,
     updateQuantity,
     setFilter,
-    getFilteredProducts,
   } = useProductStore();
 
-  const products = getFilteredProducts();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (currentHouse) {
@@ -46,17 +49,35 @@ export function InventoryScreen() {
     }
   }, [currentHouse?.id]);
 
+  const filteredProducts = useMemo(() => {
+    const categoryFiltered = filter
+      ? products.filter((p) => p.category_id === filter)
+      : products;
+
+    if (!searchQuery.trim()) return categoryFiltered;
+
+    const q = normalize(searchQuery);
+    return categoryFiltered.filter((p) => normalize(p.name).includes(q));
+  }, [products, filter, searchQuery]);
+
+  const isSearching = searchQuery.trim().length > 0;
+
   if (!currentHouse) return null;
 
   return (
     <View style={styles.container}>
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Buscar en mi alacena..."
+      />
       <CategoryFilter
         categories={categories}
         selectedId={filter}
         onSelect={setFilter}
       />
       <FlatList
-        data={products}
+        data={filteredProducts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ProductCard
@@ -69,15 +90,26 @@ export function InventoryScreen() {
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
         }
-        contentContainerStyle={products.length === 0 ? styles.emptyContainer : styles.list}
+        contentContainerStyle={filteredProducts.length === 0 ? styles.emptyContainer : styles.list}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          <EmptyState
-            icon="📦"
-            title="Sin productos"
-            description="Agregá tu primer producto para empezar a organizar tu alacena"
-            actionLabel="Agregar Producto"
-            onAction={() => navigation.navigate('AddProduct', {})}
-          />
+          isSearching ? (
+            <EmptyState
+              icon="🔍"
+              title="Sin resultados"
+              description={`No se encontraron productos que coincidan con "${searchQuery}"`}
+              actionLabel="Limpiar búsqueda"
+              onAction={() => setSearchQuery('')}
+            />
+          ) : (
+            <EmptyState
+              icon="📦"
+              title="Sin productos"
+              description="Agregá tu primer producto para empezar a organizar tu alacena"
+              actionLabel="Agregar Producto"
+              onAction={() => navigation.navigate('AddProduct', {})}
+            />
+          )
         }
       />
       <TouchableOpacity
@@ -95,6 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: spacing.md,
   },
   list: {
     paddingVertical: spacing.sm,
