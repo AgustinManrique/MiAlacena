@@ -18,7 +18,7 @@
 
 ## Entrega 2 (Pendiente)
 
-- [ ] Lista de compras inteligente (auto-agregar productos con stock bajo)
+- [x] Lista de compras inteligente (auto-agregar productos con stock bajo)
 - [x] Agregar buscador en sección Alacena
 - [ ] Mejoras UX/UI (animaciones, transiciones)
 - [ ] Persistencia offline con sync
