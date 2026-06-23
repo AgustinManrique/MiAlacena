@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,9 +16,37 @@ import { colors, fontSize, spacing } from '../../theme';
 
 export function ProfileScreen() {
   const { profile, signOut } = useAuthStore();
-  const { currentHouse, members, reset: resetHouse } = useHouseStore();
+  const {
+    currentHouse,
+    members,
+    loadMembers,
+    reset: resetHouse,
+  } = useHouseStore();
   const resetProducts = useProductStore((s) => s.reset);
   const resetShopping = useShoppingStore((s) => s.reset);
+
+  useEffect(() => {
+    if (!currentHouse?.id) return;
+
+    void loadMembers(currentHouse.id);
+  }, [currentHouse?.id]);
+
+  const handleLoadMembers = async () => {
+    if (!currentHouse) {
+      Alert.alert('Casa no encontrada');
+      return;
+    }
+
+    try {
+      await loadMembers(currentHouse.id);
+    } catch (error) {
+      console.error(error);
+      Alert.alert(
+        'Error',
+        'No se pudieron cargar los integrantes'
+      );
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('Cerrar sesión', '¿Estás seguro?', [
@@ -70,9 +98,10 @@ export function ProfileScreen() {
           />
         </Card>
       )}
-
+      
       <Card style={styles.membersCard}>
         <Text style={styles.sectionTitle}>Miembros</Text>
+        
         {members.map((member) => (
           <View key={member.id} style={styles.memberRow}>
             <View style={styles.memberAvatar}>
@@ -85,7 +114,9 @@ export function ProfileScreen() {
                 {member.profile?.full_name || 'Usuario'}
               </Text>
               <Text style={styles.memberRole}>
-                {member.role === 'admin' ? 'Admin' : 'Miembro'}
+                {member.role === 'admin'
+                  ? '👑 Admin'
+                  : 'Miembro'}
               </Text>
             </View>
           </View>
