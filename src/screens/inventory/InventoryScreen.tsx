@@ -66,16 +66,18 @@ export function InventoryScreen() {
 
   return (
     <View style={styles.container}>
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder="Buscar en mi alacena..."
-      />
-      <CategoryFilter
-        categories={categories}
-        selectedId={filter}
-        onSelect={setFilter}
-      />
+      <View style={styles.headerSection}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Buscar en mi alacena..."
+        />
+        <CategoryFilter
+          categories={categories}
+          selectedId={filter}
+          onSelect={setFilter}
+        />
+      </View>
       <FlatList
         data={filteredProducts}
         keyExtractor={(item) => item.id}
@@ -128,6 +130,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: spacing.md,
+  },
+  headerSection: {
+    flexShrink: 0,
   },
   list: {
     paddingVertical: spacing.sm,
