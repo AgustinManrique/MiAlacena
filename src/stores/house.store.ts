@@ -24,19 +24,22 @@ export const useHouseStore = create<HouseState>((set, get) => ({
 
   loadHouses: async (userId) => {
     set({ isLoading: true });
+
     try {
       const houses = await houseService.getUserHouses(userId);
-      const currentHouse = get().currentHouse;
+
       set({
         houses,
-        currentHouse: currentHouse || houses[0] || null,
+        currentHouse: houses[0] || null,
         isLoading: false,
       });
-    } catch {
-      set({ isLoading: false });
-    }
-  },
-
+    } catch (error) {
+      set({
+        isLoading: false,
+        });
+      }
+    },
+    
   setCurrentHouse: (house) => set({ currentHouse: house }),
 
   createHouse: async (name, ownerId) => {

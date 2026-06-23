@@ -18,7 +18,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { isLoading, isAuthenticated, initialize, setSession } = useAuthStore();
-  const { houses, loadHouses } = useHouseStore();
+  const { houses, loadHouses, isLoading: housesLoading } = useHouseStore();
   const session = useAuthStore((s) => s.session);
 
   useEffect(() => {
@@ -30,18 +30,24 @@ export function RootNavigator() {
   }, []);
 
   useEffect(() => {
-    if (session) {
-      loadHouses(session.user.id);
-    }
+    if (!session?.user?.id) return;
+
+    void loadHouses(session.user.id);
   }, [session?.user?.id]);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
+  if (isLoading || housesLoading) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <ActivityIndicator />
+    </View>
+  );
+}
 
   const needsHouseSetup = isAuthenticated && houses.length === 0;
 

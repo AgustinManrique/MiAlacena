@@ -66,9 +66,8 @@ export const houseService = {
 
   async getHouseMembers(houseId: string): Promise<HouseMember[]> {
     const { data, error } = await supabase
-      .from('house_members')
-      .select('*, profile:profiles(*)')
-      .eq('house_id', houseId);
+        .from('profiles')
+        .select('*');
     if (error) throw error;
     return data || [];
   },
