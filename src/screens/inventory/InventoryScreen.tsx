@@ -1,9 +1,9 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import {
+  Animated,
   View,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   Text,
   RefreshControl,
 } from 'react-native';
@@ -14,8 +14,8 @@ import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { ProductCard } from '../../components/inventory/ProductCard';
 import { CategoryFilter } from '../../components/inventory/CategoryFilter';
-import { EmptyState } from '../../components/ui';
-import { colors, spacing, shadows, borderRadius } from '../../theme';
+import { EmptyState, PressableScale } from '../../components/ui';
+import { colors, spacing, shadows } from '../../theme';
 
 export function InventoryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -33,12 +33,25 @@ export function InventoryScreen() {
 
   const products = getFilteredProducts();
 
+  // Entrada animada del FAB.
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     if (currentHouse) {
       loadProducts(currentHouse.id);
       loadCategories(currentHouse.id);
     }
   }, [currentHouse?.id]);
+
+  useEffect(() => {
+    Animated.spring(fabAnim, {
+      toValue: 1,
+      friction: 5,
+      tension: 80,
+      delay: 200,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const onRefresh = useCallback(async () => {
     if (currentHouse) {
@@ -50,11 +63,7 @@ export function InventoryScreen() {
 
   return (
     <View style={styles.container}>
-      <CategoryFilter
-        categories={categories}
-        selectedId={filter}
-        onSelect={setFilter}
-      />
+      <CategoryFilter categories={categories} selectedId={filter} onSelect={setFilter} />
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
@@ -66,9 +75,7 @@ export function InventoryScreen() {
             onDecrement={() => updateQuantity(item.id, item.quantity - 1)}
           />
         )}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}
         contentContainerStyle={products.length === 0 ? styles.emptyContainer : styles.list}
         ListEmptyComponent={
           <EmptyState
@@ -80,13 +87,19 @@ export function InventoryScreen() {
           />
         }
       />
-      <TouchableOpacity
-        style={[styles.fab, shadows.lg]}
-        onPress={() => navigation.navigate('AddProduct', {})}
-        activeOpacity={0.8}
+      <Animated.View
+        style={[
+          styles.fabWrapper,
+          { opacity: fabAnim, transform: [{ scale: fabAnim }] },
+        ]}
       >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+        <PressableScale
+          style={[styles.fab, shadows.lg]}
+          onPress={() => navigation.navigate('AddProduct', {})}
+        >
+          <Text style={styles.fabText}>+</Text>
+        </PressableScale>
+      </Animated.View>
     </View>
   );
 }
@@ -102,10 +115,12 @@ const styles = StyleSheet.create({
   emptyContainer: {
     flexGrow: 1,
   },
-  fab: {
+  fabWrapper: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,

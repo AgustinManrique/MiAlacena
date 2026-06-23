@@ -47,10 +47,21 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          // Transición por defecto: deslizar desde la derecha.
+          animation: 'slide_from_right',
+          animationDuration: 220,
+        }}
+      >
         {!isAuthenticated ? (
           <>
-            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ animation: 'fade' }}
+            />
             <Stack.Screen
               name="Register"
               component={RegisterScreen}
@@ -58,10 +69,18 @@ export function RootNavigator() {
             />
           </>
         ) : needsHouseSetup ? (
-          <Stack.Screen name="HouseSetup" component={HouseSetupScreen} />
+          <Stack.Screen
+            name="HouseSetup"
+            component={HouseSetupScreen}
+            options={{ animation: 'fade' }}
+          />
         ) : (
           <>
-            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen
+              name="Main"
+              component={MainTabs}
+              options={{ animation: 'fade' }}
+            />
             <Stack.Screen
               name="AddProduct"
               component={AddProductScreen}
@@ -69,6 +88,8 @@ export function RootNavigator() {
                 headerShown: true,
                 title: 'Nuevo Producto',
                 headerBackTitle: 'Volver',
+                // "Nuevo" entra como modal, desde abajo.
+                animation: 'slide_from_bottom',
               }}
             />
             <Stack.Screen

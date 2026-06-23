@@ -1,7 +1,18 @@
 import { create } from 'zustand';
-import { Product, Category, UnitOfMeasure } from '../types';
+import { persist } from 'zustand/middleware';
+import { Product, Category, UnitOfMeasure, ProductStatus } from '../types';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { asyncStorage } from '../lib/storage';
+import { uuidv4 } from '../lib/uuid';
+import { enqueueMutation } from '../lib/syncEngine';
+import { useSyncStore } from './sync.store';
+
+function computeStatus(quantity: number, minStock: number): ProductStatus {
+  if (quantity <= 0) return 'out';
+  if (quantity <= minStock) return 'low';
+  return 'ok';
+}
 
 interface ProductState {
   products: Product[];
@@ -28,64 +39,116 @@ interface ProductState {
   reset: () => void;
 }
 
-export const useProductStore = create<ProductState>((set, get) => ({
-  products: [],
-  categories: [],
-  isLoading: false,
-  filter: null,
+export const useProductStore = create<ProductState>()(
+  persist(
+    (set, get) => ({
+      products: [],
+      categories: [],
+      isLoading: false,
+      filter: null,
 
-  loadProducts: async (houseId) => {
-    set({ isLoading: true });
-    try {
-      const products = await productService.getProducts(houseId);
-      set({ products, isLoading: false });
-    } catch {
-      set({ isLoading: false });
+      // --- LECTURA: intenta traer del server; si falla (offline), conserva
+      // el cache persistido. Además preserva productos con create pendiente
+      // para no pisarlos con la respuesta del server.
+      loadProducts: async (houseId) => {
+        set({ isLoading: true });
+        try {
+          const fetched = await productService.getProducts(houseId);
+          const pendingIds = useSyncStore
+            .getState()
+            .queue.filter((m) => m.type === 'product.create')
+            .map((m) => (m.type === 'product.create' ? m.payload.product.id : ''));
+          const keepLocal = get().products.filter(
+            (p) => pendingIds.includes(p.id) && !fetched.some((f) => f.id === p.id)
+          );
+          set({ products: [...fetched, ...keepLocal], isLoading: false });
+        } catch {
+          // Sin conexión: mantenemos el cache local.
+          set({ isLoading: false });
+        }
+      },
+
+      loadCategories: async (houseId) => {
+        try {
+          let categories = await categoryService.getCategories(houseId);
+          if (categories.length === 0) {
+            categories = await categoryService.createDefaultCategories(houseId);
+          }
+          set({ categories });
+        } catch {
+          // Offline: usamos las categorías cacheadas.
+        }
+      },
+
+      // --- ESCRITURA OPTIMISTA: actualiza local YA y encola para el server.
+      createProduct: async (input) => {
+        const now = new Date().toISOString();
+        const category = get().categories.find((c) => c.id === input.category_id);
+        const optimistic: Product = {
+          id: uuidv4(),
+          house_id: input.house_id,
+          category_id: input.category_id,
+          name: input.name,
+          quantity: input.quantity,
+          unit: input.unit,
+          min_stock: input.min_stock,
+          status: computeStatus(input.quantity, input.min_stock),
+          barcode: null,
+          expiry_date: null,
+          image_url: null,
+          created_by: input.created_by,
+          updated_at: now,
+          created_at: now,
+          category,
+        };
+        set((state) => ({ products: [...state.products, optimistic] }));
+        enqueueMutation({ type: 'product.create', payload: { product: optimistic } });
+        return optimistic;
+      },
+
+      updateProduct: async (productId, updates) => {
+        set((state) => ({
+          products: state.products.map((p) => {
+            if (p.id !== productId) return p;
+            const merged = { ...p, ...updates };
+            return {
+              ...merged,
+              status: computeStatus(merged.quantity, merged.min_stock),
+              updated_at: new Date().toISOString(),
+            };
+          }),
+        }));
+        enqueueMutation({ type: 'product.update', payload: { productId, updates } });
+      },
+
+      updateQuantity: async (productId, newQuantity) => {
+        await get().updateProduct(productId, { quantity: Math.max(0, newQuantity) });
+      },
+
+      deleteProduct: async (productId) => {
+        set((state) => ({
+          products: state.products.filter((p) => p.id !== productId),
+        }));
+        enqueueMutation({ type: 'product.delete', payload: { productId } });
+      },
+
+      setFilter: (categoryId) => set({ filter: categoryId }),
+
+      getFilteredProducts: () => {
+        const { products, filter } = get();
+        if (!filter) return products;
+        return products.filter((p) => p.category_id === filter);
+      },
+
+      reset: () => set({ products: [], categories: [], filter: null }),
+    }),
+    {
+      name: 'mialacena-products',
+      storage: asyncStorage,
+      partialize: (state) => ({
+        products: state.products,
+        categories: state.categories,
+      }),
     }
-  },
-
-  loadCategories: async (houseId) => {
-    let categories = await categoryService.getCategories(houseId);
-    if (categories.length === 0) {
-      categories = await categoryService.createDefaultCategories(houseId);
-    }
-    set({ categories });
-  },
-
-  createProduct: async (input) => {
-    const product = await productService.createProduct(input);
-    set((state) => ({ products: [...state.products, product] }));
-    return product;
-  },
-
-  updateProduct: async (productId, updates) => {
-    const updated = await productService.updateProduct(productId, updates);
-    set((state) => ({
-      products: state.products.map((p) => (p.id === productId ? updated : p)),
-    }));
-  },
-
-  updateQuantity: async (productId, newQuantity) => {
-    const updated = await productService.updateQuantity(productId, newQuantity);
-    set((state) => ({
-      products: state.products.map((p) => (p.id === productId ? updated : p)),
-    }));
-  },
-
-  deleteProduct: async (productId) => {
-    await productService.deleteProduct(productId);
-    set((state) => ({
-      products: state.products.filter((p) => p.id !== productId),
-    }));
-  },
-
-  setFilter: (categoryId) => set({ filter: categoryId }),
-
-  getFilteredProducts: () => {
-    const { products, filter } = get();
-    if (!filter) return products;
-    return products.filter((p) => p.category_id === filter);
-  },
-
-  reset: () => set({ products: [], categories: [], filter: null }),
-}));
+  )
+);

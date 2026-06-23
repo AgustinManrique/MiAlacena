@@ -47,6 +47,27 @@ export const productService = {
     return data;
   },
 
+  /**
+   * Inserta un producto con un id ya asignado en el cliente.
+   * Lo usa el motor de sync para subir productos creados OFFLINE,
+   * conservando el mismo id que ya tiene la UI.
+   */
+  async createProductWithId(product: Product): Promise<Product> {
+    // Sacamos la relación embebida `category` y dejamos que la DB ponga
+    // los timestamps por default. Conservamos el `id` generado en el cliente.
+    const { category, created_at, updated_at, ...row } = product;
+    void category;
+    void created_at;
+    void updated_at;
+    const { data, error } = await supabase
+      .from('products')
+      .insert(row)
+      .select('*, category:categories(*)')
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
   async updateProduct(
     productId: string,
     updates: Partial<Pick<Product, 'name' | 'category_id' | 'quantity' | 'unit' | 'min_stock' | 'barcode' | 'expiry_date' | 'image_url'>>
