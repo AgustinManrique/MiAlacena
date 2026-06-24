@@ -16,14 +16,14 @@
 - [x] Schema SQL con RLS
 - [x] Documentación técnica
 
-## Entrega 2 (Pendiente)
+## Entrega 2 (Completa)
 
 - [x] Lista de compras inteligente (auto-agregar productos con stock bajo)
 - [x] Agregar buscador en sección Alacena
-- [ ] Mejoras UX/UI (animaciones, transiciones)
-- [ ] Persistencia offline con sync
+- [x] Mejoras UX/UI (animaciones, transiciones)
+- [x] Persistencia offline con sync
 - [x] Edición de productos
-- [ ] Gestión de miembros (admin)
+- [x] Gestión de miembros (admin)
 
 ## Entrega 3 (Pendiente)
 

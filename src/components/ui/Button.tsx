@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
-  TouchableOpacity,
+  Animated,
+  Pressable,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -33,41 +34,55 @@ export function Button({
   textStyle,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateTo = (value: number) =>
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 0,
+    }).start();
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.base,
-        styles[variant],
-        styles[`size_${size}`],
-        isDisabled && styles.disabled,
-        style,
-      ]}
+    <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.7}
+      onPressIn={() => animateTo(0.96)}
+      onPressOut={() => animateTo(1)}
     >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.white}
-          size="small"
-        />
-      ) : (
-        <>
-          {icon}
-          <Text
-            style={[
-              styles.text,
-              styles[`text_${variant}`],
-              styles[`textSize_${size}`],
-              textStyle,
-            ]}
-          >
-            {title}
-          </Text>
-        </>
-      )}
-    </TouchableOpacity>
+      <Animated.View
+        style={[
+          styles.base,
+          styles[variant],
+          styles[`size_${size}`],
+          isDisabled && styles.disabled,
+          { transform: [{ scale }] },
+          style,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator
+            color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.white}
+            size="small"
+          />
+        ) : (
+          <>
+            {icon}
+            <Text
+              style={[
+                styles.text,
+                styles[`text_${variant}`],
+                styles[`textSize_${size}`],
+                textStyle,
+              ]}
+            >
+              {title}
+            </Text>
+          </>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -79,57 +94,20 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     gap: spacing.sm,
   },
-  primary: {
-    backgroundColor: colors.primary,
-  },
-  secondary: {
-    backgroundColor: colors.secondary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  size_sm: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  size_md: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.lg,
-  },
-  size_lg: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  text: {
-    fontWeight: fontWeight.semibold,
-  },
-  text_primary: {
-    color: colors.white,
-  },
-  text_secondary: {
-    color: colors.white,
-  },
-  text_outline: {
-    color: colors.primary,
-  },
-  text_ghost: {
-    color: colors.primary,
-  },
-  textSize_sm: {
-    fontSize: fontSize.sm,
-  },
-  textSize_md: {
-    fontSize: fontSize.md,
-  },
-  textSize_lg: {
-    fontSize: fontSize.lg,
-  },
+  primary: { backgroundColor: colors.primary },
+  secondary: { backgroundColor: colors.secondary },
+  outline: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary },
+  ghost: { backgroundColor: 'transparent' },
+  size_sm: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  size_md: { paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.lg },
+  size_lg: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl },
+  disabled: { opacity: 0.5 },
+  text: { fontWeight: fontWeight.semibold },
+  text_primary: { color: colors.white },
+  text_secondary: { color: colors.white },
+  text_outline: { color: colors.primary },
+  text_ghost: { color: colors.primary },
+  textSize_sm: { fontSize: fontSize.sm },
+  textSize_md: { fontSize: fontSize.md },
+  textSize_lg: { fontSize: fontSize.lg },
 });

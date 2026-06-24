@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import { ShoppingItem } from '../../types';
 import { colors, borderRadius, fontSize, spacing, shadows } from '../../theme';
+import { PressableScale } from '../ui/PressableScale';
 
 interface ShoppingItemCardProps {
   item: ShoppingItem;
@@ -10,26 +11,62 @@ interface ShoppingItemCardProps {
 }
 
 export function ShoppingItemCard({ item, onToggle, onRemove }: ShoppingItemCardProps) {
+  // Animación de entrada (fade + slide desde abajo).
+  const enter = useRef(new Animated.Value(0)).current;
+  // Progreso del check (0 = vacío, 1 = marcado).
+  const checked = useRef(new Animated.Value(item.is_purchased ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.spring(checked, {
+      toValue: item.is_purchased ? 1 : 0,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 120,
+    }).start();
+  }, [item.is_purchased]);
+
+  const enterStyle = {
+    opacity: enter,
+    transform: [
+      { translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+    ],
+  };
+
   return (
-    <View style={[styles.card, shadows.sm, item.is_purchased && styles.purchased]}>
-      <TouchableOpacity style={styles.checkbox} onPress={onToggle}>
-        <View style={[styles.check, item.is_purchased && styles.checked]}>
-          {item.is_purchased && <Text style={styles.checkmark}>✓</Text>}
+    <Animated.View style={enterStyle}>
+      <View style={[styles.card, shadows.sm, item.is_purchased && styles.cardCompleted]}>
+        <PressableScale onPress={onToggle} style={styles.checkbox}>
+          <View style={styles.check}>
+            <Animated.View
+              style={[styles.checkFill, { transform: [{ scale: checked }], opacity: checked }]}
+            />
+            <Animated.Text style={[styles.checkmark, { opacity: checked }]}>✓</Animated.Text>
+          </View>
+        </PressableScale>
+
+        <View style={styles.info}>
+          <Text style={[styles.name, item.is_purchased && styles.nameCompleted]}>
+            {item.name}
+          </Text>
+          <Text style={styles.detail}>
+            {item.quantity} {item.unit}
+            {item.source === 'auto' ? ' · Automático' : ''}
+          </Text>
         </View>
-      </TouchableOpacity>
-      <View style={styles.info}>
-        <Text style={[styles.name, item.is_purchased && styles.nameCompleted]}>
-          {item.name}
-        </Text>
-        <Text style={styles.detail}>
-          {item.quantity} {item.unit}
-          {item.source === 'auto' ? ' · Automático' : ''}
-        </Text>
+
+        <PressableScale onPress={onRemove} style={styles.removeBtn}>
+          <Text style={styles.removeText}>✕</Text>
+        </PressableScale>
       </View>
-      <TouchableOpacity style={styles.removeBtn} onPress={onRemove}>
-        <Text style={styles.removeText}>✕</Text>
-      </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -43,7 +80,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  purchased: {
+  cardCompleted: {
     opacity: 0.6,
   },
   checkbox: {
@@ -57,10 +94,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  checked: {
+  checkFill: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    borderRadius: 12,
   },
   checkmark: {
     color: colors.white,
