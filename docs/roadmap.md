@@ -18,11 +18,11 @@
 
 ## Entrega 2 (Pendiente)
 
-- [ ] Lista de compras inteligente (auto-agregar productos con stock bajo)
-- [ ] Sincronización en tiempo real (Supabase Realtime)
+- [x] Lista de compras inteligente (auto-agregar productos con stock bajo)
+- [x] Agregar buscador en sección Alacena
 - [ ] Mejoras UX/UI (animaciones, transiciones)
 - [ ] Persistencia offline con sync
-- [ ] Edición de productos
+- [x] Edición de productos
 - [ ] Gestión de miembros (admin)
 
 ## Entrega 3 (Pendiente)

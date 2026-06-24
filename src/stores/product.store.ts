@@ -2,6 +2,20 @@ import { create } from 'zustand';
 import { Product, Category, UnitOfMeasure } from '../types';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import { useShoppingStore } from './shopping.store';
+import { useAuthStore } from './auth.store';
+
+function resolveAddedBy(product: Product): string {
+  return useAuthStore.getState().session?.user.id ?? product.created_by;
+}
+
+async function syncShopping(product: Product) {
+  try {
+    await useShoppingStore.getState().syncFromProductChange(product, resolveAddedBy(product));
+  } catch (err) {
+    console.warn('[autoShoppingSync] failed:', err);
+  }
+}
 
 interface ProductState {
   products: Product[];
@@ -55,6 +69,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
   createProduct: async (input) => {
     const product = await productService.createProduct(input);
     set((state) => ({ products: [...state.products, product] }));
+    await syncShopping(product);
     return product;
   },
 
@@ -63,6 +78,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set((state) => ({
       products: state.products.map((p) => (p.id === productId ? updated : p)),
     }));
+    await syncShopping(updated);
   },
 
   updateQuantity: async (productId, newQuantity) => {
@@ -70,6 +86,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set((state) => ({
       products: state.products.map((p) => (p.id === productId ? updated : p)),
     }));
+    await syncShopping(updated);
   },
 
   deleteProduct: async (productId) => {

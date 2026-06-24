@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { ShoppingItem, UnitOfMeasure } from '../types';
+import { Product, ShoppingItem, UnitOfMeasure } from '../types';
 import { shoppingService } from '../services/shopping.service';
+import { autoShoppingSync } from '../services/shoppingSync.service';
 
 interface ShoppingState {
   items: ShoppingItem[];
@@ -19,6 +20,7 @@ interface ShoppingState {
   togglePurchased: (itemId: string, userId: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearPurchased: (houseId: string) => Promise<void>;
+  syncFromProductChange: (product: Product, addedBy: string) => Promise<void>;
   getPendingCount: () => number;
   reset: () => void;
 }
@@ -57,6 +59,17 @@ export const useShoppingStore = create<ShoppingState>((set, get) => ({
   clearPurchased: async (houseId) => {
     await shoppingService.clearPurchased(houseId);
     set((state) => ({ items: state.items.filter((i) => !i.is_purchased) }));
+  },
+
+  syncFromProductChange: async (product, addedBy) => {
+    const result = await autoShoppingSync.syncProduct(product, addedBy);
+    if (result.type === 'added') {
+      set((state) => ({ items: [result.item, ...state.items] }));
+    } else if (result.type === 'removed') {
+      set((state) => ({
+        items: state.items.filter((i) => i.id !== result.itemId),
+      }));
+    }
   },
 
   getPendingCount: () => get().items.filter((i) => !i.is_purchased).length,

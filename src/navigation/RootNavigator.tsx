@@ -9,6 +9,7 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { HouseSetupScreen } from '../screens/home/HouseSetupScreen';
 import { AddProductScreen } from '../screens/inventory/AddProductScreen';
+import { EditProductScreen } from '../screens/inventory/EditProductScreen';
 import { ProductDetailScreen } from '../screens/inventory/ProductDetailScreen';
 import { MainTabs } from './MainTabs';
 import { authService } from '../services/auth.service';
@@ -83,6 +84,15 @@ export function RootNavigator() {
               options={{
                 headerShown: true,
                 title: 'Detalle',
+                headerBackTitle: 'Volver',
+              }}
+            />
+            <Stack.Screen
+              name="EditProduct"
+              component={EditProductScreen}
+              options={{
+                headerShown: true,
+                title: 'Editar Producto',
                 headerBackTitle: 'Volver',
               }}
             />
