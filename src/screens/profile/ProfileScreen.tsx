@@ -6,24 +6,35 @@ import {
   ScrollView,
   Alert,
   Share,
+  TouchableOpacity,
 } from 'react-native';
+import { HouseMember } from '../../types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { useShoppingStore } from '../../stores/shopping.store';
 import { Button, Card } from '../../components/ui';
-import { colors, fontSize, spacing } from '../../theme';
+import { colors, fontSize, spacing, borderRadius } from '../../theme';
 
 export function ProfileScreen() {
   const { profile, signOut } = useAuthStore();
+  const session = useAuthStore((s) => s.session);
+  const currentUserId = session?.user?.id;
   const {
     currentHouse,
     members,
     loadMembers,
+    removeMember,
+    updateMemberRole,
     reset: resetHouse,
   } = useHouseStore();
   const resetProducts = useProductStore((s) => s.reset);
   const resetShopping = useShoppingStore((s) => s.reset);
+
+  const isCurrentUserAdmin = members.some(
+    (m) => m.user_id === currentUserId && m.role === 'admin'
+  );
+  const adminCount = members.filter((m) => m.role === 'admin').length;
 
   useEffect(() => {
     if (!currentHouse?.id) return;
@@ -73,6 +84,95 @@ export function ProfileScreen() {
     } catch {}
   };
 
+  const handlePromote = async (userId: string) => {
+    if (!currentHouse) return;
+    try {
+      await updateMemberRole(currentHouse.id, userId, 'admin');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo actualizar el rol');
+    }
+  };
+
+  const handleDemote = async (userId: string) => {
+    if (!currentHouse) return;
+    try {
+      await updateMemberRole(currentHouse.id, userId, 'member');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo actualizar el rol');
+    }
+  };
+
+  const handleRemove = (member: HouseMember) => {
+    if (!currentHouse) return;
+    Alert.alert(
+      'Quitar miembro',
+      `¿Seguro que querés quitar a ${member.profile?.full_name || 'este miembro'} de la casa?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Quitar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removeMember(currentHouse.id, member.user_id);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'No se pudo quitar al miembro');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderMemberActions = (member: HouseMember) => {
+    // El usuario actual nunca tiene acciones sobre sí mismo
+    if (member.user_id === currentUserId) {
+      return (
+        <View style={styles.youChip}>
+          <Text style={styles.youChipText}>Vos</Text>
+        </View>
+      );
+    }
+
+    // Solo los admins ven acciones sobre otros miembros
+    if (!isCurrentUserAdmin) return null;
+
+    if (member.role === 'member') {
+      return (
+        <View style={styles.memberActions}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionPositive]}
+            onPress={() => handlePromote(member.user_id)}
+          >
+            <Text style={styles.actionPositiveText}>👑 Hacer admin</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionDanger]}
+            onPress={() => handleRemove(member)}
+          >
+            <Text style={styles.actionDangerText}>✕ Quitar</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // member.role === 'admin': solo "Bajar a miembro", y nunca si es el único admin
+    if (adminCount > 1) {
+      return (
+        <View style={styles.memberActions}>
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.actionNeutral]}
+            onPress={() => handleDemote(member.user_id)}
+          >
+            <Text style={styles.actionNeutralText}>Bajar a miembro</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.avatar}>
@@ -119,6 +219,7 @@ export function ProfileScreen() {
                   : 'Miembro'}
               </Text>
             </View>
+            {renderMemberActions(member)}
           </View>
         ))}
       </Card>
@@ -229,6 +330,55 @@ const styles = StyleSheet.create({
   },
   memberRole: {
     fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  youChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surfaceVariant,
+  },
+  youChipText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  memberActions: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  actionBtn: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+  },
+  actionPositive: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
+  },
+  actionPositiveText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.primaryDark,
+  },
+  actionDanger: {
+    backgroundColor: colors.errorLight,
+    borderColor: colors.error,
+  },
+  actionDangerText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.error,
+  },
+  actionNeutral: {
+    backgroundColor: colors.surfaceVariant,
+    borderColor: colors.border,
+  },
+  actionNeutralText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
   logoutBtn: {

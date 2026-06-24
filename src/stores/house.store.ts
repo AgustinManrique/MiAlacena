@@ -13,6 +13,8 @@ interface HouseState {
   createHouse: (name: string, ownerId: string) => Promise<House>;
   joinHouse: (inviteCode: string, userId: string) => Promise<House>;
   loadMembers: (houseId: string) => Promise<void>;
+  removeMember: (houseId: string, userId: string) => Promise<void>;
+  updateMemberRole: (houseId: string, userId: string, role: 'admin' | 'member') => Promise<void>;
   reset: () => void;
 }
 
@@ -63,6 +65,18 @@ export const useHouseStore = create<HouseState>((set, get) => ({
   loadMembers: async (houseId) => {
     const members = await houseService.getHouseMembers(houseId);
     set({ members });
+  },
+
+  removeMember: async (houseId, userId) => {
+    await houseService.removeMember(houseId, userId);
+    set((state) => ({ members: state.members.filter((m) => m.user_id !== userId) }));
+  },
+
+  updateMemberRole: async (houseId, userId, role) => {
+    await houseService.updateMemberRole(houseId, userId, role);
+    set((state) => ({
+      members: state.members.map((m) => (m.user_id === userId ? { ...m, role } : m)),
+    }));
   },
 
   reset: () => set({ houses: [], currentHouse: null, members: [] }),

@@ -84,4 +84,13 @@ export const houseService = {
       .eq('user_id', userId);
     if (error) throw error;
   },
+
+  async updateMemberRole(houseId: string, userId: string, role: 'admin' | 'member') {
+    const { error } = await supabase
+      .from('house_members')
+      .update({ role })
+      .eq('house_id', houseId)
+      .eq('user_id', userId);
+    if (error) throw error;
+  },
 };
