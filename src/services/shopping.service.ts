@@ -104,4 +104,23 @@ export const shoppingService = {
       .eq('is_purchased', true);
     if (error) throw error;
   },
+
+  async findAutoPendingByProduct(productId: string): Promise<ShoppingItem | null> {
+    const { data, error } = await supabase
+      .from('shopping_items')
+      .select('*')
+      .eq('product_id', productId)
+      .eq('source', 'auto')
+      .eq('is_purchased', false)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async removeAutoPendingByProduct(productId: string): Promise<string | null> {
+    const existing = await this.findAutoPendingByProduct(productId);
+    if (!existing) return null;
+    await this.removeItem(existing.id);
+    return existing.id;
+  },
 };

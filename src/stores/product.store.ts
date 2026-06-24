@@ -7,11 +7,25 @@ import { asyncStorage } from '../lib/storage';
 import { uuidv4 } from '../lib/uuid';
 import { enqueueMutation } from '../lib/syncEngine';
 import { useSyncStore } from './sync.store';
+import { useShoppingStore } from './shopping.store';
+import { useAuthStore } from './auth.store';
 
 function computeStatus(quantity: number, minStock: number): ProductStatus {
   if (quantity <= 0) return 'out';
   if (quantity <= minStock) return 'low';
   return 'ok';
+}
+
+function resolveAddedBy(product: Product): string {
+  return useAuthStore.getState().session?.user.id ?? product.created_by;
+}
+
+async function syncShopping(product: Product) {
+  try {
+    await useShoppingStore.getState().syncFromProductChange(product, resolveAddedBy(product));
+  } catch (err) {
+    console.warn('[autoShoppingSync] failed:', err);
+  }
 }
 
 interface ProductState {
@@ -103,22 +117,26 @@ export const useProductStore = create<ProductState>()(
         };
         set((state) => ({ products: [...state.products, optimistic] }));
         enqueueMutation({ type: 'product.create', payload: { product: optimistic } });
+        await syncShopping(optimistic);
         return optimistic;
       },
 
       updateProduct: async (productId, updates) => {
+        let updated: Product | undefined;
         set((state) => ({
           products: state.products.map((p) => {
             if (p.id !== productId) return p;
             const merged = { ...p, ...updates };
-            return {
+            updated = {
               ...merged,
               status: computeStatus(merged.quantity, merged.min_stock),
               updated_at: new Date().toISOString(),
             };
+            return updated;
           }),
         }));
         enqueueMutation({ type: 'product.update', payload: { productId, updates } });
+        if (updated) await syncShopping(updated);
       },
 
       updateQuantity: async (productId, newQuantity) => {

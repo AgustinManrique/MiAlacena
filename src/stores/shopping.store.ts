@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ShoppingItem, UnitOfMeasure } from '../types';
+import { Product, ShoppingItem, UnitOfMeasure } from '../types';
 import { shoppingService } from '../services/shopping.service';
 import { asyncStorage } from '../lib/storage';
 import { uuidv4 } from '../lib/uuid';
@@ -24,6 +24,7 @@ interface ShoppingState {
   togglePurchased: (itemId: string, userId: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearPurchased: (houseId: string) => Promise<void>;
+  syncFromProductChange: (product: Product, addedBy: string) => Promise<void>;
   getPendingCount: () => number;
   reset: () => void;
 }
@@ -102,6 +103,39 @@ export const useShoppingStore = create<ShoppingState>()(
       clearPurchased: async (houseId) => {
         set((state) => ({ items: state.items.filter((i) => !i.is_purchased) }));
         enqueueMutation({ type: 'shopping.clearPurchased', payload: { houseId } });
+      },
+
+      // Auto-sync: cuando un producto cambia de stock, refleja el cambio en
+      // la lista de compras. Misma lógica que autoShoppingSync.syncProduct,
+      // pero aplicada sobre el estado local con acciones optimistas, así
+      // funciona también sin conexión (offline-first).
+      syncFromProductChange: async (product, addedBy) => {
+        const items = get().items;
+        const existingAuto = items.find(
+          (i) => i.source === 'auto' && i.product_id === product.id && !i.is_purchased
+        );
+
+        if (product.status === 'ok') {
+          // Stock OK: si había un item automático pendiente, lo sacamos.
+          if (existingAuto) {
+            await get().removeItem(existingAuto.id);
+          }
+          return;
+        }
+
+        // Stock bajo o agotado: agregamos un item automático si no existe ya.
+        if (existingAuto) return;
+
+        const suggested = product.min_stock > 0 ? product.min_stock : 1;
+        await get().addItem({
+          house_id: product.house_id,
+          product_id: product.id,
+          name: product.name,
+          quantity: suggested,
+          unit: product.unit,
+          added_by: addedBy,
+          source: 'auto',
+        });
       },
 
       getPendingCount: () => get().items.filter((i) => !i.is_purchased).length,

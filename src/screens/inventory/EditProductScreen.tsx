@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,32 +6,44 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList, UnitOfMeasure } from '../../types';
 import { Input, Button } from '../../components/ui';
-import { useAuthStore } from '../../stores/auth.store';
-import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { UNITS_OF_MEASURE } from '../../config/constants';
 import { colors, fontSize, spacing, borderRadius } from '../../theme';
 import { validateProductForm } from '../../utils/validation';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AddProduct'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'EditProduct'>;
 
-export function AddProductScreen({ navigation, route }: Props) {
-  const session = useAuthStore((s) => s.session);
-  const currentHouse = useHouseStore((s) => s.currentHouse);
-  const { categories, createProduct } = useProductStore();
+export function EditProductScreen({ navigation, route }: Props) {
+  const { productId } = route.params;
+  const products = useProductStore((s) => s.products);
+  const categories = useProductStore((s) => s.categories);
+  const updateProduct = useProductStore((s) => s.updateProduct);
+
+  const product = products.find((p) => p.id === productId);
 
   const [name, setName] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [minStock, setMinStock] = useState('1');
+  const [quantity, setQuantity] = useState('');
+  const [minStock, setMinStock] = useState('');
   const [unit, setUnit] = useState<UnitOfMeasure>('unidad');
-  const [categoryId, setCategoryId] = useState<string | null>(
-    route.params?.categoryId || null
-  );
+  const [categoryId, setCategoryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setName(product.name);
+      setQuantity(String(product.quantity));
+      setMinStock(String(product.min_stock));
+      setUnit(product.unit);
+      setCategoryId(product.category_id);
+      setReady(true);
+    }
+  }, [product?.id]);
 
   const handleSave = async () => {
     const errors = validateProductForm({ name, quantity, minStock, unit });
@@ -39,26 +51,41 @@ export function AddProductScreen({ navigation, route }: Props) {
       Alert.alert('Error', errors.join('\n'));
       return;
     }
-    if (!currentHouse || !session) return;
 
     setLoading(true);
     try {
-      await createProduct({
-        house_id: currentHouse.id,
+      await updateProduct(productId, {
         name: name.trim(),
         category_id: categoryId,
         quantity: Number(quantity) || 0,
         unit,
         min_stock: Number(minStock) || 1,
-        created_by: session.user.id,
       });
-      navigation.goBack();
+      Alert.alert('Listo', 'Producto actualizado', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert('Error', err.message || 'No se pudo actualizar el producto');
     } finally {
       setLoading(false);
     }
   };
+
+  if (!product && !ready) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Producto no encontrado</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -129,7 +156,7 @@ export function AddProductScreen({ navigation, route }: Props) {
       </View>
 
       <Button
-        title="Guardar Producto"
+        title="Guardar Cambios"
         onPress={handleSave}
         loading={loading}
         size="lg"
@@ -146,6 +173,16 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+  },
+  errorText: {
+    fontSize: fontSize.lg,
+    color: colors.textSecondary,
   },
   label: {
     fontSize: fontSize.sm,
