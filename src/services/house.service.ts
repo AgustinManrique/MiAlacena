@@ -67,7 +67,10 @@ export const houseService = {
   async getHouseMembers(houseId: string): Promise<HouseMember[]> {
     const { data, error } = await supabase
       .from('house_members')
-      .select('*, profile:profiles(*)')
+      .select(`
+        *,
+        profile:profiles!house_members_user_id_fkey(*)
+      `)
       .eq('house_id', houseId);
     if (error) throw error;
     return data || [];
@@ -77,6 +80,15 @@ export const houseService = {
     const { error } = await supabase
       .from('house_members')
       .delete()
+      .eq('house_id', houseId)
+      .eq('user_id', userId);
+    if (error) throw error;
+  },
+
+  async updateMemberRole(houseId: string, userId: string, role: 'admin' | 'member') {
+    const { error } = await supabase
+      .from('house_members')
+      .update({ role })
       .eq('house_id', houseId)
       .eq('user_id', userId);
     if (error) throw error;
