@@ -158,6 +158,7 @@ rm -rf node_modules package-lock.json && npm install
 - [Historias de Usuario](docs/user-stories.md)
 - [Roadmap / Entregas](docs/roadmap.md)
 - [Design System](docs/design-system.md)
+- [Changelog](CHANGELOG.md)
 
 ---
 
