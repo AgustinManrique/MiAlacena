@@ -7,7 +7,8 @@ import { InventoryScreen } from '../screens/inventory/InventoryScreen';
 import { ShoppingScreen } from '../screens/shopping/ShoppingScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { useShoppingStore } from '../stores/shopping.store';
-import { colors, fontSize } from '../theme';
+import { SyncStatusBadge } from '../components/ui/SyncStatusBadge';
+import { colors, fontSize, spacing } from '../theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -24,31 +25,22 @@ export function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        tabBarHideOnKeyboard: true,
         tabBarIcon: ({ focused }) => {
           const icon = ICONS[route.name];
-          return (
-            <Text style={{ fontSize: 22 }}>
-              {focused ? icon.active : icon.inactive}
-            </Text>
-          );
+          return <Text style={{ fontSize: 22 }}>{focused ? icon.active : icon.inactive}</Text>;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontSize: fontSize.xs, fontWeight: '500' },
         headerStyle: { backgroundColor: colors.surface },
         headerTitleStyle: { fontWeight: '600', color: colors.text },
+        // Estado de sincronización visible en el header de cada tab.
+        headerRight: () => <SyncStatusBadge style={{ marginRight: spacing.md }} />,
       })}
     >
-      <Tab.Screen
-        name="HomeTab"
-        component={HomeScreen}
-        options={{ title: 'Inicio', headerShown: false }}
-      />
-      <Tab.Screen
-        name="InventoryTab"
-        component={InventoryScreen}
-        options={{ title: 'Alacena' }}
-      />
+      <Tab.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Inicio', headerShown: false }} />
+      <Tab.Screen name="InventoryTab" component={InventoryScreen} options={{ title: 'Alacena' }} />
       <Tab.Screen
         name="ShoppingTab"
         component={ShoppingScreen}
@@ -57,11 +49,7 @@ export function MainTabs() {
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={{ title: 'Perfil' }}
-      />
+      <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
 }

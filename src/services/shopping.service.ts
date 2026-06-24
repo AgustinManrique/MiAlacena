@@ -40,6 +40,23 @@ export const shoppingService = {
     return data;
   },
 
+  /**
+   * Inserta un item con id asignado en el cliente (para items creados OFFLINE).
+   */
+  async addItemWithId(item: ShoppingItem): Promise<ShoppingItem> {
+    // Sacamos la relación `product` y el created_at (default en DB).
+    const { product, created_at, ...row } = item;
+    void product;
+    void created_at;
+    const { data, error } = await supabase
+      .from('shopping_items')
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
   async togglePurchased(itemId: string, userId: string): Promise<ShoppingItem> {
     const { data: current } = await supabase
       .from('shopping_items')
@@ -48,6 +65,15 @@ export const shoppingService = {
       .single();
 
     const isPurchased = !current?.is_purchased;
+    return this.setPurchased(itemId, isPurchased, userId);
+  },
+
+  /**
+   * Setea el estado de comprado de forma directa (sin leer antes).
+   * La UI ya conoce el estado destino, así que el replay no necesita
+   * leer de Supabase: evita el problema de "read-before-write" offline.
+   */
+  async setPurchased(itemId: string, isPurchased: boolean, userId: string): Promise<ShoppingItem> {
     const { data, error } = await supabase
       .from('shopping_items')
       .update({
