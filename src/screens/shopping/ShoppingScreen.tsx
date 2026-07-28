@@ -6,15 +6,19 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useHouseStore } from '../../stores/house.store';
 import { useShoppingStore } from '../../stores/shopping.store';
 import { useAuthStore } from '../../stores/auth.store';
+import { RootStackParamList, UnitOfMeasure } from '../../types';
 import { ShoppingItemCard } from '../../components/shopping/ShoppingItemCard';
+import { ScanCameraButton } from '../../components/barcode/ScanCameraButton';
 import { Button, EmptyState, Input } from '../../components/ui';
 import { colors, spacing } from '../../theme';
-import { UnitOfMeasure } from '../../types';
 
 export function ShoppingScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentHouse = useHouseStore((s) => s.currentHouse);
   const session = useAuthStore((s) => s.session);
   const {
@@ -129,6 +133,10 @@ export function ShoppingScreen() {
           />
         </View>
       )}
+      <ScanCameraButton
+        onPress={() => navigation.navigate('BarcodeScanner', { mode: 'scan' })}
+        style={styles.fab}
+      />
     </View>
   );
 }
@@ -137,6 +145,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: spacing.lg,
   },
   addRow: {
     flexDirection: 'row',

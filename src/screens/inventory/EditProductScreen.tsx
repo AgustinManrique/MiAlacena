@@ -31,6 +31,7 @@ export function EditProductScreen({ navigation, route }: Props) {
   const [minStock, setMinStock] = useState('');
   const [unit, setUnit] = useState<UnitOfMeasure>('unidad');
   const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [barcode, setBarcode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -41,9 +42,17 @@ export function EditProductScreen({ navigation, route }: Props) {
       setMinStock(String(product.min_stock));
       setUnit(product.unit);
       setCategoryId(product.category_id);
+      setBarcode(product.barcode);
       setReady(true);
     }
   }, [product?.id]);
+
+  // Al volver del escáner (mode 'edit'), el nuevo barcode llega por params.
+  useEffect(() => {
+    if (route.params.scannedBarcode) {
+      setBarcode(route.params.scannedBarcode);
+    }
+  }, [route.params.scannedBarcode]);
 
   const handleSave = async () => {
     const errors = validateProductForm({ name, quantity, minStock, unit });
@@ -60,6 +69,7 @@ export function EditProductScreen({ navigation, route }: Props) {
         quantity: Number(quantity) || 0,
         unit,
         min_stock: Number(minStock) || 1,
+        barcode,
       });
       Alert.alert('Listo', 'Producto actualizado', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -98,6 +108,22 @@ export function EditProductScreen({ navigation, route }: Props) {
         placeholder="Ej: Leche entera"
         value={name}
         onChangeText={setName}
+      />
+
+      {barcode !== null && (
+        <>
+          <Text style={styles.label}>Código de barras</Text>
+          <Text style={styles.barcodeValue}>{barcode}</Text>
+        </>
+      )}
+      <Button
+        title="Escanear de nuevo"
+        variant="outline"
+        size="sm"
+        onPress={() =>
+          navigation.navigate('BarcodeScanner', { mode: 'edit', productId })
+        }
+        style={styles.scanBtn}
       />
 
       <Text style={styles.label}>Categoría</Text>
@@ -189,6 +215,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     fontWeight: '500',
+  },
+  barcodeValue: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  scanBtn: {
+    marginBottom: spacing.md,
   },
   categoryScroll: {
     marginBottom: spacing.md,

@@ -4,6 +4,7 @@ import { Product } from '../../types';
 import { Card } from '../ui/Card';
 import { StatusBadge } from '../ui/StatusBadge';
 import { PressableScale } from '../ui/PressableScale';
+import { QuantityStepper } from '../ui/QuantityStepper';
 import { colors, fontSize, spacing } from '../../theme';
 
 interface ProductCardProps {
@@ -63,17 +64,13 @@ export function ProductCard({ product, onPress, onIncrement, onDecrement }: Prod
             <Text style={styles.stockLabel}>
               Stock: {product.quantity} {product.unit} (mín: {product.min_stock})
             </Text>
-            <View style={styles.controls}>
-              <PressableScale style={[styles.controlBtn, styles.decrementBtn]} onPress={onDecrement}>
-                <Text style={styles.controlText}>−</Text>
-              </PressableScale>
-              <Animated.Text style={[styles.quantityText, { transform: [{ scale: qtyScale }] }]}>
-                {product.quantity}
-              </Animated.Text>
-              <PressableScale style={[styles.controlBtn, styles.incrementBtn]} onPress={onIncrement}>
-                <Text style={[styles.controlText, { color: colors.white }]}>+</Text>
-              </PressableScale>
-            </View>
+            <Animated.View style={{ transform: [{ scale: qtyScale }] }}>
+              <QuantityStepper
+                value={product.quantity}
+                onIncrement={onIncrement}
+                onDecrement={onDecrement}
+              />
+            </Animated.View>
           </View>
         </Card>
       </PressableScale>
@@ -112,22 +109,4 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   stockLabel: { fontSize: fontSize.sm, color: colors.textSecondary },
-  controls: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  controlBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  decrementBtn: { backgroundColor: colors.surfaceVariant },
-  incrementBtn: { backgroundColor: colors.primary },
-  controlText: { fontSize: 18, fontWeight: '700', color: colors.text },
-  quantityText: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.text,
-    minWidth: 30,
-    textAlign: 'center',
-  },
 });
