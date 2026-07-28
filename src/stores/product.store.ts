@@ -44,12 +44,15 @@ interface ProductState {
     unit: UnitOfMeasure;
     min_stock: number;
     created_by: string;
+    barcode?: string | null;
+    image_url?: string | null;
   }) => Promise<Product>;
   updateProduct: (productId: string, updates: Partial<Product>) => Promise<void>;
   updateQuantity: (productId: string, newQuantity: number) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   setFilter: (categoryId: string | null) => void;
   getFilteredProducts: () => Product[];
+  findByBarcode: (barcode: string) => Product | undefined;
   reset: () => void;
 }
 
@@ -107,9 +110,9 @@ export const useProductStore = create<ProductState>()(
           unit: input.unit,
           min_stock: input.min_stock,
           status: computeStatus(input.quantity, input.min_stock),
-          barcode: null,
+          barcode: input.barcode ?? null,
           expiry_date: null,
-          image_url: null,
+          image_url: input.image_url ?? null,
           created_by: input.created_by,
           updated_at: now,
           created_at: now,
@@ -156,6 +159,12 @@ export const useProductStore = create<ProductState>()(
         const { products, filter } = get();
         if (!filter) return products;
         return products.filter((p) => p.category_id === filter);
+      },
+
+      // Búsqueda en memoria sobre los productos ya cargados (sin fetch).
+      findByBarcode: (barcode) => {
+        const { products } = get();
+        return products.find((p) => p.barcode === barcode);
       },
 
       reset: () => set({ products: [], categories: [], filter: null }),
