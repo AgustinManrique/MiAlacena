@@ -102,6 +102,7 @@ export type RootStackParamList = {
     mode?: 'scan' | 'edit'; // 'scan' es el default desde InventoryScreen, 'edit' desde EditProductScreen
     productId?: string; // requerido en mode 'edit' para devolver el barcode a la edición abierta
   };
+  Settings: undefined;
 };
 
 export type MainTabParamList = {

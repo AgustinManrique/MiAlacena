@@ -12,6 +12,7 @@ import { AddProductScreen } from '../screens/inventory/AddProductScreen';
 import { EditProductScreen } from '../screens/inventory/EditProductScreen';
 import { ProductDetailScreen } from '../screens/inventory/ProductDetailScreen';
 import { BarcodeScannerScreen } from '../screens/inventory/BarcodeScannerScreen';
+import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { MainTabs } from './MainTabs';
 import { authService } from '../services/auth.service';
 import { colors } from '../theme';
@@ -125,6 +126,15 @@ export function RootNavigator() {
                 presentation: 'modal',
                 animation: 'slide_from_bottom',
                 headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{
+                headerShown: true,
+                title: 'Configuración',
+                headerBackTitle: 'Volver',
               }}
             />
           </>
