@@ -8,7 +8,9 @@ import {
   Share,
   TouchableOpacity,
 } from 'react-native';
-import { HouseMember } from '../../types';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { HouseMember, RootStackParamList } from '../../types';
 import { useAuthStore } from '../../stores/auth.store';
 import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
@@ -17,6 +19,7 @@ import { Button, Card } from '../../components/ui';
 import { colors, fontSize, spacing, borderRadius } from '../../theme';
 
 export function ProfileScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { profile, signOut } = useAuthStore();
   const session = useAuthStore((s) => s.session);
   const currentUserId = session?.user?.id;
@@ -41,23 +44,6 @@ export function ProfileScreen() {
 
     void loadMembers(currentHouse.id);
   }, [currentHouse?.id]);
-
-  const handleLoadMembers = async () => {
-    if (!currentHouse) {
-      Alert.alert('Casa no encontrada');
-      return;
-    }
-
-    try {
-      await loadMembers(currentHouse.id);
-    } catch (error) {
-      console.error(error);
-      Alert.alert(
-        'Error',
-        'No se pudieron cargar los integrantes'
-      );
-    }
-  };
 
   const handleLogout = () => {
     Alert.alert('Cerrar sesión', '¿Estás seguro?', [
@@ -175,6 +161,18 @@ export function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.profileHeader}>
+        <View style={styles.profileHeaderSpacer} />
+        <Button
+          title="⚙️"
+          variant="ghost"
+          size="sm"
+          onPress={() => navigation.navigate('Settings')}
+          style={styles.settingsButton}
+          textStyle={styles.settingsButtonText}
+        />
+      </View>
+
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
           {profile?.full_name?.charAt(0)?.toUpperCase() || '?'}
@@ -185,7 +183,7 @@ export function ProfileScreen() {
 
       {currentHouse && (
         <Card style={styles.houseCard}>
-          <Text style={styles.sectionTitle}>🏠 {currentHouse.name}</Text>
+          <Text style={styles.sectionTitle}>{currentHouse.name}</Text>
           <View style={styles.codeRow}>
             <Text style={styles.codeLabel}>Código de invitación:</Text>
             <Text style={styles.codeValue}>{currentHouse.invite_code}</Text>
@@ -198,10 +196,10 @@ export function ProfileScreen() {
           />
         </Card>
       )}
-      
+
       <Card style={styles.membersCard}>
-        <Text style={styles.sectionTitle}>Miembros</Text>
-        
+        <Text style={styles.membersTitle}>Miembros</Text>
+
         {members.map((member) => (
           <View key={member.id} style={styles.memberRow}>
             <View style={styles.memberAvatar}>
@@ -214,9 +212,7 @@ export function ProfileScreen() {
                 {member.profile?.full_name || 'Usuario'}
               </Text>
               <Text style={styles.memberRole}>
-                {member.role === 'admin'
-                  ? '👑 Admin'
-                  : 'Miembro'}
+                {member.role === 'admin' ? '👑 Admin' : 'Miembro'}
               </Text>
             </View>
             {renderMemberActions(member)}
@@ -226,8 +222,8 @@ export function ProfileScreen() {
 
       <Button
         title="Cerrar Sesión"
-        variant="ghost"
-        textStyle={{ color: colors.error }}
+        variant="primary"
+        textStyle={{ color: colors.white }}
         onPress={handleLogout}
         style={styles.logoutBtn}
       />
@@ -242,7 +238,26 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    paddingTop: spacing.sm,
     alignItems: 'center',
+  },
+  profileHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: spacing.md,
+  },
+  profileHeaderSpacer: {
+    flex: 1,
+  },
+  settingsButton: {
+    paddingHorizontal: 0,
+    marginRight: -spacing.xs,
+  },
+  settingsButtonText: {
+    fontSize: fontSize.xl,
   },
   avatar: {
     width: 80,
@@ -298,6 +313,12 @@ const styles = StyleSheet.create({
   membersCard: {
     width: '100%',
     padding: spacing.lg,
+  },
+  membersTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
   memberRow: {
     flexDirection: 'row',
@@ -382,7 +403,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   logoutBtn: {
-    marginTop: spacing.xl,
-    width: '100%',
+    marginTop: spacing.xxl,
+    alignSelf: 'center',
+    width: 'auto',
+    minWidth: 200,
+    backgroundColor: colors.error,
   },
 });

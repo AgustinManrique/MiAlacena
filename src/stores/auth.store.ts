@@ -8,6 +8,8 @@ interface AuthState {
   profile: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isUpdatingProfile: boolean;
+  updateProfileError: string | null;
 
   initialize: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
@@ -15,6 +17,8 @@ interface AuthState {
   signOut: () => Promise<void>;
   loadProfile: () => Promise<void>;
   setSession: (session: Session | null) => void;
+  updateProfile: (updates: { full_name?: string }) => Promise<void>;
+  clearUpdateProfileError: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -22,6 +26,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   isLoading: true,
   isAuthenticated: false,
+  isUpdatingProfile: false,
+  updateProfileError: null,
 
   initialize: async () => {
     try {
@@ -58,6 +64,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const profile = await authService.getProfile(session.user.id);
     set({ profile });
   },
+
+  updateProfile: async (updates) => {
+    const { session, profile } = get();
+    if (!session || !profile) return;
+
+    set({ isUpdatingProfile: true, updateProfileError: null });
+
+    try {
+      const updated = await authService.updateProfile(session.user.id, updates);
+      set({ profile: updated, isUpdatingProfile: false });
+    } catch (err: any) {
+      set({
+        isUpdatingProfile: false,
+        updateProfileError: err.message || 'No se pudo actualizar el perfil',
+      });
+      throw err;
+    }
+  },
+
+  clearUpdateProfileError: () => set({ updateProfileError: null }),
 
   setSession: (session) => {
     set({ session, isAuthenticated: !!session });

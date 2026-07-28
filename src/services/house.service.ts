@@ -93,4 +93,46 @@ export const houseService = {
       .eq('user_id', userId);
     if (error) throw error;
   },
+
+  async updateHouseName(houseId: string, name: string): Promise<House> {
+    const { data, error } = await supabase
+      .from('houses')
+      .update({ name })
+      .eq('id', houseId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateHouseInviteCode(houseId: string, inviteCode: string): Promise<House> {
+    const { data, error } = await supabase
+      .from('houses')
+      .update({ invite_code: inviteCode.toUpperCase() })
+      .eq('id', houseId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateHouse(
+    houseId: string,
+    updates: { name?: string; invite_code?: string }
+  ): Promise<House> {
+    const payload: { name?: string; invite_code?: string } = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.invite_code !== undefined) {
+      payload.invite_code = updates.invite_code.toUpperCase();
+    }
+
+    const { data, error } = await supabase
+      .from('houses')
+      .update(payload)
+      .eq('id', houseId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
 };
