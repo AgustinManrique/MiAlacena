@@ -88,8 +88,20 @@ export type RootStackParamList = {
   JoinHouse: undefined;
   HouseSetup: undefined;
   ProductDetail: { productId: string };
-  AddProduct: { categoryId?: string };
-  EditProduct: { productId: string };
+  AddProduct:
+    | {
+        categoryId?: string;
+        barcode?: string;
+        name?: string;
+        categoryName?: string;
+        imageUrl?: string;
+      }
+    | undefined;
+  EditProduct: { productId: string; scannedBarcode?: string };
+  BarcodeScanner: {
+    mode?: 'scan' | 'edit'; // 'scan' es el default desde InventoryScreen, 'edit' desde EditProductScreen
+    productId?: string; // requerido en mode 'edit' para devolver el barcode a la edición abierta
+  };
 };
 
 export type MainTabParamList = {

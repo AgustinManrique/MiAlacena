@@ -11,6 +11,7 @@ import { HouseSetupScreen } from '../screens/home/HouseSetupScreen';
 import { AddProductScreen } from '../screens/inventory/AddProductScreen';
 import { EditProductScreen } from '../screens/inventory/EditProductScreen';
 import { ProductDetailScreen } from '../screens/inventory/ProductDetailScreen';
+import { BarcodeScannerScreen } from '../screens/inventory/BarcodeScannerScreen';
 import { MainTabs } from './MainTabs';
 import { authService } from '../services/auth.service';
 import { colors } from '../theme';
@@ -115,6 +116,15 @@ export function RootNavigator() {
                 headerShown: true,
                 title: 'Editar Producto',
                 headerBackTitle: 'Volver',
+              }}
+            />
+            <Stack.Screen
+              name="BarcodeScanner"
+              component={BarcodeScannerScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                headerShown: false,
               }}
             />
           </>
