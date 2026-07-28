@@ -293,3 +293,38 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================
+-- PUSH NOTIFICATIONS (Entrega 3)
+-- ============================================================
+
+-- Tabla de tokens de push (Expo push tokens) por usuario/dispositivo.
+CREATE TABLE IF NOT EXISTS push_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  platform TEXT NOT NULL DEFAULT 'unknown',
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, token)
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_tokens_user ON push_tokens(user_id);
+
+ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Cada usuario gestiona únicamente sus propios tokens.
+DROP POLICY IF EXISTS "Users can view own push tokens" ON push_tokens;
+CREATE POLICY "Users can view own push tokens"
+  ON push_tokens FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own push tokens" ON push_tokens;
+CREATE POLICY "Users can insert own push tokens"
+  ON push_tokens FOR INSERT WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own push tokens" ON push_tokens;
+CREATE POLICY "Users can update own push tokens"
+  ON push_tokens FOR UPDATE USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own push tokens" ON push_tokens;
+CREATE POLICY "Users can delete own push tokens"
+  ON push_tokens FOR DELETE USING (user_id = auth.uid());

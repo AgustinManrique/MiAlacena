@@ -9,6 +9,7 @@ import { enqueueMutation } from '../lib/syncEngine';
 import { useSyncStore } from './sync.store';
 import { useShoppingStore } from './shopping.store';
 import { useAuthStore } from './auth.store';
+import { notifyLowStock } from '../lib/pushSender';
 
 function computeStatus(quantity: number, minStock: number): ProductStatus {
   if (quantity <= 0) return 'out';
@@ -26,6 +27,18 @@ async function syncShopping(product: Product) {
   } catch (err) {
     console.warn('[autoShoppingSync] failed:', err);
   }
+}
+
+/**
+ * Dispara una push a la casa cuando un producto ENTRA en estado bajo/agotado.
+ * Solo notifica en la transición (previousStatus !== status) para no spamear
+ * al decrementar repetidamente algo que ya estaba bajo. Best-effort.
+ */
+function maybeNotifyLowStock(product: Product, previousStatus: ProductStatus | null) {
+  if (product.status === 'ok') return;
+  if (previousStatus === product.status) return;
+  const excludeUserId = useAuthStore.getState().session?.user?.id;
+  void notifyLowStock(product, excludeUserId);
 }
 
 interface ProductState {
@@ -118,14 +131,17 @@ export const useProductStore = create<ProductState>()(
         set((state) => ({ products: [...state.products, optimistic] }));
         enqueueMutation({ type: 'product.create', payload: { product: optimistic } });
         await syncShopping(optimistic);
+        maybeNotifyLowStock(optimistic, null);
         return optimistic;
       },
 
       updateProduct: async (productId, updates) => {
         let updated: Product | undefined;
+        let previousStatus: ProductStatus | null = null;
         set((state) => ({
           products: state.products.map((p) => {
             if (p.id !== productId) return p;
+            previousStatus = p.status;
             const merged = { ...p, ...updates };
             updated = {
               ...merged,
@@ -136,7 +152,10 @@ export const useProductStore = create<ProductState>()(
           }),
         }));
         enqueueMutation({ type: 'product.update', payload: { productId, updates } });
-        if (updated) await syncShopping(updated);
+        if (updated) {
+          await syncShopping(updated);
+          maybeNotifyLowStock(updated, previousStatus);
+        }
       },
 
       updateQuantity: async (productId, newQuantity) => {

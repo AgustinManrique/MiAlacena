@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase';
 import { House, HouseMember } from '../types';
 import { INVITE_CODE_LENGTH } from '../config/constants';
+import { notifyMemberJoined } from '../lib/pushSender';
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -51,6 +52,18 @@ export const houseService = {
       .from('house_members')
       .insert({ house_id: house.id, user_id: userId, role: 'member' });
     if (memberError) throw memberError;
+
+    // Avisar a los miembros existentes (best-effort: no rompe el join).
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+      await notifyMemberJoined(house.id, profile?.full_name || 'Alguien', userId);
+    } catch (err) {
+      console.warn('[push] notifyMemberJoined falló:', err);
+    }
 
     return house;
   },
