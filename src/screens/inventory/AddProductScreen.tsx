@@ -19,18 +19,34 @@ import { validateProductForm } from '../../utils/validation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddProduct'>;
 
+const normalize = (str: string): string =>
+  str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 export function AddProductScreen({ navigation, route }: Props) {
   const session = useAuthStore((s) => s.session);
   const currentHouse = useHouseStore((s) => s.currentHouse);
   const { categories, createProduct } = useProductStore();
 
-  const [name, setName] = useState('');
+  // Datos precargados desde el escáner (Open Food Facts). Son constantes
+  // de origen: viajan tal cual al createProduct.
+  const barcode = route.params?.barcode ?? null;
+  const imageUrl = route.params?.imageUrl ?? null;
+
+  const [name, setName] = useState(route.params?.name ?? '');
   const [quantity, setQuantity] = useState('1');
   const [minStock, setMinStock] = useState('1');
   const [unit, setUnit] = useState<UnitOfMeasure>('unidad');
-  const [categoryId, setCategoryId] = useState<string | null>(
-    route.params?.categoryId || null
-  );
+  const [categoryId, setCategoryId] = useState<string | null>(() => {
+    if (route.params?.categoryId) return route.params.categoryId;
+    const categoryName = route.params?.categoryName;
+    if (!categoryName) return null;
+    // El nombre viene de OFF ("leches", "dairies"); se preselecciona solo
+    // si coincide exactamente con una categoría propia.
+    const match = categories.find(
+      (c) => normalize(c.name) === normalize(categoryName)
+    );
+    return match?.id ?? null;
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
@@ -51,6 +67,8 @@ export function AddProductScreen({ navigation, route }: Props) {
         unit,
         min_stock: Number(minStock) || 1,
         created_by: session.user.id,
+        barcode,
+        image_url: imageUrl,
       });
       navigation.goBack();
     } catch (err: any) {
@@ -72,6 +90,13 @@ export function AddProductScreen({ navigation, route }: Props) {
         value={name}
         onChangeText={setName}
       />
+
+      {barcode !== null && (
+        <>
+          <Text style={styles.label}>Código de barras</Text>
+          <Text style={styles.barcodeValue}>{barcode}</Text>
+        </>
+      )}
 
       <Text style={styles.label}>Categoría</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
@@ -152,6 +177,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     fontWeight: '500',
+  },
+  barcodeValue: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 4,
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
   categoryScroll: {
     marginBottom: spacing.md,
