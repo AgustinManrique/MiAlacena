@@ -14,6 +14,7 @@ import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { ProductCard } from '../../components/inventory/ProductCard';
 import { CategoryFilter } from '../../components/inventory/CategoryFilter';
+import { ScanCameraButton } from '../../components/barcode/ScanCameraButton';
 import { EmptyState, SearchBar, PressableScale } from '../../components/ui';
 import { colors, spacing, shadows } from '../../theme';
 
@@ -133,12 +134,17 @@ export function InventoryScreen() {
           { opacity: fabAnim, transform: [{ scale: fabAnim }] },
         ]}
       >
-        <PressableScale
-          style={[styles.fab, shadows.lg]}
-          onPress={() => navigation.navigate('AddProduct', {})}
-        >
-          <Text style={styles.fabText}>+</Text>
-        </PressableScale>
+        <View style={styles.fabRow}>
+          <ScanCameraButton
+            onPress={() => navigation.navigate('BarcodeScanner', { mode: 'scan' })}
+          />
+          <PressableScale
+            style={[styles.fab, shadows.lg]}
+            onPress={() => navigation.navigate('AddProduct', {})}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </PressableScale>
+        </View>
       </Animated.View>
     </View>
   );
@@ -163,6 +169,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
+  },
+  fabRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
   },
   fab: {
     width: 56,
