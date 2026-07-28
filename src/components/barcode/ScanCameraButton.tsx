@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { PressableScale } from '../ui/PressableScale';
-import { shadows, colors, fontSize } from '../../theme';
+import { shadows, colors } from '../../theme';
 
 interface ScanCameraButtonProps {
   onPress: () => void;
@@ -10,12 +11,10 @@ interface ScanCameraButtonProps {
 
 export function ScanCameraButton({ onPress, style }: ScanCameraButtonProps) {
   return (
-    // El contenedor externo recibe el estilo (posición absoluta, etc.) para que
-    // el PressableScale interno mantenga su área de touch de 56x56.
     <View style={style}>
       <PressableScale style={[styles.fab, shadows.lg]} onPress={onPress}>
         <View style={styles.iconContainer}>
-          <Text style={styles.icon}>📷</Text>
+          <Ionicons name="camera" size={24} color={colors.white} />
         </View>
       </PressableScale>
     </View>
@@ -33,11 +32,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  icon: {
-    fontSize: fontSize.xxl,
-    lineHeight: fontSize.xxl + 4,
-    textAlignVertical: 'center',
-    includeFontPadding: false,
   },
 });
