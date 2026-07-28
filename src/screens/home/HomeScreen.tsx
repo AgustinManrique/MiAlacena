@@ -42,11 +42,11 @@ export function HomeScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.greeting}>
-        <Text style={styles.greetingText}>
+      <View style={styles.welcomeSection}>
+        <Text style={styles.welcomeText}>
           Hola, {profile?.full_name?.split(' ')[0] || 'Usuario'}
         </Text>
-        <Text style={styles.houseName}>{currentHouse?.name || 'Mi Casa'}</Text>
+        <Text style={styles.welcomeHouseName}>{currentHouse?.name || 'Mi Casa'}</Text>
       </View>
 
       <View style={styles.statsRow}>
@@ -126,22 +126,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  greeting: {
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+  welcomeSection: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     marginBottom: spacing.md,
   },
-  greetingText: {
+  welcomeText: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
-  houseName: {
+  welcomeHouseName: {
     fontSize: fontSize.md,
-    color: colors.primaryLight,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   statsRow: {
