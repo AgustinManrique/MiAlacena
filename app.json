@@ -21,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.mialacena.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,8 +39,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "REEMPLAZAR_CON_TU_EAS_PROJECT_ID"
+        "projectId": "373385e7-31d6-455b-a260-9399593f0381"
       }
-    }
+    },
+    "owner": "agustinmanrique"
   }
 }
