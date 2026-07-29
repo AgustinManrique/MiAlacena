@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "411973340405",
+    "project_id": "mialacena-7a4ea",
+    "storage_bucket": "mialacena-7a4ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411973340405:android:f42a64e8ff2ccafb8d49bc",
+        "android_client_info": {
+          "package_name": "com.mialacena.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANHnjn1yyi1M2xGbDEgVKWUe9wjTM4n3g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

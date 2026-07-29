@@ -43,3 +43,7 @@ yarn-error.*
 
 # Supabase CLI
 supabase/.temp/
+
+# Firebase service account key (FCM V1) — SECRETO, nunca commitear
+*firebase-adminsdk*.json
+google-service-account*.json
