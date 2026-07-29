@@ -41,7 +41,8 @@
         {
           "cameraPermission": "Permití acceso a la cámara para escanear códigos de barras"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
