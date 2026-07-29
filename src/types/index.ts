@@ -94,6 +94,28 @@ export interface ConsumptionStatsMonth {
   categories: ConsumptionCategoryStat[];
 }
 
+export interface Recipe {
+  id: string;
+  name: string;
+  thumb: string;
+  matchCount: number;
+}
+
+export interface RecipeIngredient {
+  name: string;
+  measure: string;
+}
+
+export interface RecipeDetail {
+  id: string;
+  name: string;
+  thumb: string;
+  category: string;
+  area: string;
+  instructions: string;
+  ingredients: RecipeIngredient[];
+}
+
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
@@ -118,11 +140,13 @@ export type RootStackParamList = {
     productId?: string; // requerido en mode 'edit' para devolver el barcode a la edición abierta
   };
   Settings: undefined;
+  RecipeDetail: { mealId: string };
 };
 
 export type MainTabParamList = {
   HomeTab: undefined;
   InventoryTab: undefined;
   ShoppingTab: undefined;
+  RecipesTab: undefined;
   ProfileTab: undefined;
 };
