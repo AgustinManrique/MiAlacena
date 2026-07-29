@@ -1,0 +1,52 @@
+{
+  "months": [
+    {
+      "monthId": "2026-05",
+      "monthLabel": "Mayo 2026",
+      "categories": [
+        { "categoryName": "Lácteos", "amount": 18200 },
+        { "categoryName": "Carnes", "amount": 42100 },
+        { "categoryName": "Frutas y Verduras", "amount": 26750 },
+        { "categoryName": "Panadería", "amount": 10300 },
+        { "categoryName": "Bebidas", "amount": 15100 },
+        { "categoryName": "Limpieza", "amount": 9800 },
+        { "categoryName": "Higiene", "amount": 7600 },
+        { "categoryName": "Snacks", "amount": 13200 },
+        { "categoryName": "Congelados", "amount": 16800 },
+        { "categoryName": "Otros", "amount": 6200 }
+      ]
+    },
+    {
+      "monthId": "2026-06",
+      "monthLabel": "Junio 2026",
+      "categories": [
+        { "categoryName": "Lácteos", "amount": 21400 },
+        { "categoryName": "Carnes", "amount": 46800 },
+        { "categoryName": "Frutas y Verduras", "amount": 28900 },
+        { "categoryName": "Panadería", "amount": 11800 },
+        { "categoryName": "Bebidas", "amount": 17200 },
+        { "categoryName": "Limpieza", "amount": 13400 },
+        { "categoryName": "Higiene", "amount": 8400 },
+        { "categoryName": "Snacks", "amount": 15100 },
+        { "categoryName": "Congelados", "amount": 14300 },
+        { "categoryName": "Otros", "amount": 7300 }
+      ]
+    },
+    {
+      "monthId": "2026-07",
+      "monthLabel": "Julio 2026",
+      "categories": [
+        { "categoryName": "Lácteos", "amount": 23600 },
+        { "categoryName": "Carnes", "amount": 51200 },
+        { "categoryName": "Frutas y Verduras", "amount": 31450 },
+        { "categoryName": "Panadería", "amount": 12400 },
+        { "categoryName": "Bebidas", "amount": 18900 },
+        { "categoryName": "Limpieza", "amount": 15800 },
+        { "categoryName": "Higiene", "amount": 9200 },
+        { "categoryName": "Snacks", "amount": 16750 },
+        { "categoryName": "Congelados", "amount": 17600 },
+        { "categoryName": "Otros", "amount": 8700 }
+      ]
+    }
+  ]
+}

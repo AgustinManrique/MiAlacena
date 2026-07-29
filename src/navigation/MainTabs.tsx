@@ -39,7 +39,7 @@ export function MainTabs() {
         headerRight: () => <SyncStatusBadge style={{ marginRight: spacing.md }} />,
       })}
     >
-      <Tab.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Inicio', headerShown: false }} />
+      <Tab.Screen name="HomeTab" component={HomeScreen} options={{ title: 'Inicio' }} />
       <Tab.Screen name="InventoryTab" component={InventoryScreen} options={{ title: 'Alacena' }} />
       <Tab.Screen
         name="ShoppingTab"

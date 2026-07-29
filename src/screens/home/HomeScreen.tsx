@@ -5,6 +5,9 @@ import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { useShoppingStore } from '../../stores/shopping.store';
 import { Card } from '../../components/ui';
+import { ConsumptionStatsSection } from '../../components/home/ConsumptionStatsSection';
+import { consumptionStatsService } from '../../services/consumptionStats.service';
+import { ConsumptionStatsMonth } from '../../types';
 import { colors, fontSize, spacing, shadows } from '../../theme';
 
 export function HomeScreen() {
@@ -15,10 +18,15 @@ export function HomeScreen() {
   const shoppingItems = useShoppingStore((s) => s.items);
   const loadShoppingItems = useShoppingStore((s) => s.loadItems);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [consumptionStats, setConsumptionStats] = React.useState<ConsumptionStatsMonth[]>([]);
 
   const lowStockProducts = products.filter((p) => p.status === 'low');
   const outOfStockProducts = products.filter((p) => p.status === 'out');
   const pendingShopping = shoppingItems.filter((i) => !i.is_purchased).length;
+
+  useEffect(() => {
+    consumptionStatsService.getMonthlyStats().then(setConsumptionStats);
+  }, []);
 
   useEffect(() => {
     if (currentHouse) {
@@ -42,11 +50,11 @@ export function HomeScreen() {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.greeting}>
-        <Text style={styles.greetingText}>
+      <View style={styles.welcomeSection}>
+        <Text style={styles.welcomeText}>
           Hola, {profile?.full_name?.split(' ')[0] || 'Usuario'}
         </Text>
-        <Text style={styles.houseName}>{currentHouse?.name || 'Mi Casa'}</Text>
+        <Text style={styles.welcomeHouseName}>{currentHouse?.name || 'Mi Casa'}</Text>
       </View>
 
       <View style={styles.statsRow}>
@@ -116,6 +124,8 @@ export function HomeScreen() {
         </View>
       )}
 
+      <ConsumptionStatsSection months={consumptionStats} />
+
       <View style={{ height: spacing.xxl }} />
     </ScrollView>
   );
@@ -126,22 +136,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  greeting: {
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+  welcomeSection: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     marginBottom: spacing.md,
   },
-  greetingText: {
+  welcomeText: {
     fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: colors.white,
+    color: colors.text,
   },
-  houseName: {
+  welcomeHouseName: {
     fontSize: fontSize.md,
-    color: colors.primaryLight,
+    color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   statsRow: {

@@ -6,3 +6,4 @@ export { SearchBar } from './SearchBar';
 export { StatusBadge } from './StatusBadge';
 export { PressableScale } from './PressableScale';
 export { SyncStatusBadge } from './SyncStatusBadge';
+export { QuantityStepper } from './QuantityStepper';

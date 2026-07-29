@@ -35,6 +35,12 @@
           "color": "#4CAF50",
           "defaultChannel": "default"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permití acceso a la cámara para escanear códigos de barras"
+        }
       ]
     ],
     "extra": {

@@ -79,6 +79,21 @@ export interface ShoppingItem {
   product?: Product;
 }
 
+export interface ConsumptionCategoryStat {
+  categoryName: string;
+  icon: string;
+  color: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ConsumptionStatsMonth {
+  monthId: string;
+  monthLabel: string;
+  totalAmount: number;
+  categories: ConsumptionCategoryStat[];
+}
+
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
@@ -88,8 +103,21 @@ export type RootStackParamList = {
   JoinHouse: undefined;
   HouseSetup: undefined;
   ProductDetail: { productId: string };
-  AddProduct: { categoryId?: string };
-  EditProduct: { productId: string };
+  AddProduct:
+    | {
+        categoryId?: string;
+        barcode?: string;
+        name?: string;
+        categoryName?: string;
+        imageUrl?: string;
+      }
+    | undefined;
+  EditProduct: { productId: string; scannedBarcode?: string };
+  BarcodeScanner: {
+    mode?: 'scan' | 'edit'; // 'scan' es el default desde InventoryScreen, 'edit' desde EditProductScreen
+    productId?: string; // requerido en mode 'edit' para devolver el barcode a la edición abierta
+  };
+  Settings: undefined;
 };
 
 export type MainTabParamList = {
