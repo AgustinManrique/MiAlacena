@@ -79,6 +79,21 @@ export interface ShoppingItem {
   product?: Product;
 }
 
+export interface ConsumptionCategoryStat {
+  categoryName: string;
+  icon: string;
+  color: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ConsumptionStatsMonth {
+  monthId: string;
+  monthLabel: string;
+  totalAmount: number;
+  categories: ConsumptionCategoryStat[];
+}
+
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
