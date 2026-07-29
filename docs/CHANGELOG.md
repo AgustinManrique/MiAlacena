@@ -5,6 +5,25 @@ Todos los cambios notables de **MiAlacena** se documentan en este archivo.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el proyecto
 adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-07-29 - Entrega 3 parcial
+
+### Añadido
+
+- **Estadisticas de consumo en Inicio.** Se agrego una seccion al final del dashboard con
+  resumen mensual de consumo, selector de mes, grafico circular tipo donut, total gastado en el
+  centro y desglose por categoria con monto y porcentaje.
+- **Datos simulados desacoplados.** Se incorporo `src/data/estadisticas_julio.json` como fuente
+  hardcodeada temporal, con estructura mensual preparada para reemplazarse por consultas a base
+  de datos.
+- **Servicio de estadisticas.** Se agrego `consumptionStatsService`, que normaliza los datos del
+  JSON, calcula totales y porcentajes, y reutiliza nombres, colores e iconos desde
+  `DEFAULT_CATEGORIES`.
+- **Componente reutilizable.** Se agrego `ConsumptionStatsSection` en `src/components/home/`,
+  manteniendo el uso de `Card`, tokens del theme y patrones visuales existentes.
+- **Soporte grafico.** Se instalo `react-native-svg` para renderizar el donut chart en React
+  Native/Expo.
+
+
 ## [1.1.0] - 2026-06-23 — Entrega 2
 
 Cierra los 6 objetivos del roadmap de la Entrega 2: lista de compras inteligente, búsqueda
