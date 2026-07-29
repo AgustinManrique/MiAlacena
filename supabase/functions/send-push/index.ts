@@ -55,6 +55,37 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const admin = createClient(supabaseUrl, serviceRoleKey);
 
+    // 0) AuthN/AuthZ: solo un miembro de la casa puede disparar pushes a esa casa.
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!jwt) {
+      return new Response(
+        JSON.stringify({ error: 'Falta el header Authorization' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
+    if (userErr || !userData.user) {
+      return new Response(
+        JSON.stringify({ error: 'Token inválido' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: membership } = await admin
+      .from('house_members')
+      .select('user_id')
+      .eq('house_id', house_id)
+      .eq('user_id', userData.user.id)
+      .maybeSingle();
+    if (!membership) {
+      return new Response(
+        JSON.stringify({ error: 'No es miembro de la casa' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // 1) Miembros de la casa (excluyendo opcionalmente a quien disparó el evento).
     let membersQuery = admin
       .from('house_members')
