@@ -128,10 +128,30 @@ ConsumptionStatsSection muestra:
 - Donut chart basado en cantidad de consumos.
 - Total de consumos en el centro.
 - Lista de categorias con icono, nombre, cantidad y porcentaje.
+- Categorias expandibles/colapsables.
+- Listado de productos consumidos por categoria al expandir, con nombre y cantidad consumida
+  durante el mes seleccionado.
 - Estado vacio si no hay consumos registrados.
 - Estado de carga mientras se consultan las estadisticas.
 
-9. Datos de prueba
+La expansion de categorias se maneja como estado local de la interfaz. Cambiar el estado
+expandido no dispara nuevas consultas ni modifica las estadisticas generales.
+
+9. Detalle por producto
+
+La consulta de estadisticas trae en una sola lectura los eventos de consumo junto con sus
+relaciones de categoria y producto.
+
+El servicio agrupa la informacion por:
+
+- Mes.
+- Categoria.
+- Producto dentro de cada categoria.
+
+Esto evita consultas redundantes al abrir o cerrar una categoria. El acordeon solo muestra u
+oculta datos que ya fueron calculados para el mes seleccionado.
+
+10. Datos de prueba
 
 Se agrego el archivo:
 
@@ -147,7 +167,7 @@ El script:
 - Usa IDs deterministas con uuid_generate_v5.
 - Es idempotente mediante ON CONFLICT DO NOTHING.
 
-10. Consideraciones futuras
+11. Consideraciones futuras
 
 - Agregar filtros por categoria.
 - Mostrar comparacion con el mes anterior.

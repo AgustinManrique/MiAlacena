@@ -1,25 +1,44 @@
 import { supabase } from '../config/supabase';
 import { ConsumptionEvent, ConsumptionStatsMonth } from '../types';
 
+type RelatedCategory =
+  | {
+      id: string;
+      name: string;
+      icon: string;
+      color: string;
+    }
+  | Array<{
+      id: string;
+      name: string;
+      icon: string;
+      color: string;
+    }>
+  | null;
+
+type RelatedProduct =
+  | {
+      id: string;
+      name: string;
+    }
+  | Array<{
+      id: string;
+      name: string;
+    }>
+  | null;
+
 type ConsumptionEventRow = {
   quantity_consumed: number;
   reference_month: number;
   reference_year: number;
-  category:
-    | {
-        id: string;
-        name: string;
-        icon: string;
-        color: string;
-      }
-    | Array<{
-        id: string;
-        name: string;
-        icon: string;
-        color: string;
-      }>
-    | null;
+  category: RelatedCategory;
+  product: RelatedProduct;
 };
+
+function getSingleRelation<T>(relation: T | T[] | null): T | null {
+  if (Array.isArray(relation)) return relation[0] || null;
+  return relation;
+}
 
 function getMonthLabel(referenceMonth: number, referenceYear: number) {
   const date = new Date(referenceYear, referenceMonth - 1, 1);
@@ -50,16 +69,32 @@ function buildMonthlyStats(rows: ConsumptionEventRow[]): ConsumptionStatsMonth[]
       };
 
     const quantity = Number(row.quantity_consumed) || 0;
-    const category = Array.isArray(row.category) ? row.category[0] : row.category;
-    const categoryName = category?.name || 'Sin categoría';
+    const category = getSingleRelation(row.category);
+    const product = getSingleRelation(row.product);
+    const categoryName = category?.name || 'Sin categoria';
+    const productId = product?.id || 'unknown-product';
+    const productName = product?.name || 'Producto eliminado';
     const existingCategory = month.categories.find(
-      (category) => category.categoryName === categoryName
+      (item) => item.categoryName === categoryName
     );
 
     month.totalConsumptions += quantity;
 
     if (existingCategory) {
       existingCategory.consumptionCount += quantity;
+      const existingProduct = existingCategory.products.find(
+        (item) => item.productId === productId
+      );
+
+      if (existingProduct) {
+        existingProduct.consumptionCount += quantity;
+      } else {
+        existingCategory.products.push({
+          productId,
+          productName,
+          consumptionCount: quantity,
+        });
+      }
     } else {
       month.categories.push({
         categoryName,
@@ -67,6 +102,13 @@ function buildMonthlyStats(rows: ConsumptionEventRow[]): ConsumptionStatsMonth[]
         color: category?.color || '#D7CCC8',
         consumptionCount: quantity,
         percentage: 0,
+        products: [
+          {
+            productId,
+            productName,
+            consumptionCount: quantity,
+          },
+        ],
       });
     }
 
@@ -79,6 +121,9 @@ function buildMonthlyStats(rows: ConsumptionEventRow[]): ConsumptionStatsMonth[]
       categories: month.categories
         .map((category) => ({
           ...category,
+          products: category.products.sort(
+            (a, b) => b.consumptionCount - a.consumptionCount
+          ),
           percentage:
             month.totalConsumptions > 0
               ? Math.round((category.consumptionCount / month.totalConsumptions) * 100)
@@ -101,7 +146,8 @@ export const consumptionStatsService = {
           quantity_consumed,
           reference_month,
           reference_year,
-          category:categories(id, name, icon, color)
+          category:categories(id, name, icon, color),
+          product:products(id, name)
         `
       )
       .eq('house_id', houseId)

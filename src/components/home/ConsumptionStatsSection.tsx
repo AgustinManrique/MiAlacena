@@ -26,10 +26,15 @@ export function ConsumptionStatsSection({
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(
     Math.max(months.length - 1, 0)
   );
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     setSelectedMonthIndex(Math.max(months.length - 1, 0));
   }, [months.length]);
+
+  useEffect(() => {
+    setExpandedCategory(null);
+  }, [selectedMonthIndex]);
 
   const selectedMonth = months[selectedMonthIndex];
 
@@ -151,19 +156,49 @@ export function ConsumptionStatsSection({
 
         <View style={styles.categoryList}>
           {selectedMonth.categories.map((category) => (
-            <View key={category.categoryName} style={styles.categoryRow}>
-              <View style={styles.categoryInfo}>
-                <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-                  <Text style={styles.categoryIconText}>{category.icon}</Text>
+            <View key={category.categoryName} style={styles.categoryItem}>
+              <TouchableOpacity
+                style={styles.categoryRow}
+                activeOpacity={0.7}
+                onPress={() =>
+                  setExpandedCategory((current) =>
+                    current === category.categoryName ? null : category.categoryName
+                  )
+                }
+              >
+                <View style={styles.categoryInfo}>
+                  <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
+                    <Text style={styles.categoryIconText}>{category.icon}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.categoryName}>{category.categoryName}</Text>
+                    <Text style={styles.categoryPercentage}>{category.percentage}% del total</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.categoryName}>{category.categoryName}</Text>
-                  <Text style={styles.categoryPercentage}>{category.percentage}% del total</Text>
+                <View style={styles.categoryMeta}>
+                  <Text style={styles.categoryAmount}>
+                    {formatConsumptions(category.consumptionCount)}
+                  </Text>
+                  <Text style={styles.expandIcon}>
+                    {expandedCategory === category.categoryName ? '-' : '+'}
+                  </Text>
                 </View>
-              </View>
-              <Text style={styles.categoryAmount}>
-                {formatConsumptions(category.consumptionCount)}
-              </Text>
+              </TouchableOpacity>
+
+              {expandedCategory === category.categoryName && (
+                <View style={styles.productList}>
+                  {category.products.map((product) => (
+                    <View key={product.productId} style={styles.productRow}>
+                      <Text style={styles.productName} numberOfLines={1}>
+                        {product.productName}
+                      </Text>
+                      <Text style={styles.productAmount}>
+                        {formatConsumptions(product.consumptionCount)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -248,15 +283,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   categoryList: {
-    gap: spacing.sm,
+    gap: 0,
+  },
+  categoryItem: {
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
   },
   categoryInfo: {
     flexDirection: 'row',
@@ -287,6 +324,40 @@ const styles = StyleSheet.create({
   },
   categoryAmount: {
     fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  categoryMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  expandIcon: {
+    width: 20,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  productList: {
+    paddingLeft: 44,
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.xs,
+  },
+  productName: {
+    flex: 1,
+    marginRight: spacing.sm,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  productAmount: {
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.text,
   },

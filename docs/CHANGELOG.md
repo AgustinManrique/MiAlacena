@@ -18,6 +18,9 @@ adhiere a [Versionado Semántico](https://semver.org/lang/es/).
   no son revertidos dentro del intervalo de confirmacion.
 - **Servicio de estadisticas.** Se agrego `consumptionStatsService`, que consulta
   `consumption_events`, agrupa por mes/categoria y calcula totales y porcentajes.
+- **Detalle expandible por categoria.** Cada categoria de estadisticas ahora funciona como
+  acordeon y muestra los productos consumidos en el mes seleccionado, junto con su cantidad
+  total consumida.
 - **Componente reutilizable.** Se agrego `ConsumptionStatsSection` en `src/components/home/`,
   manteniendo el uso de `Card`, tokens del theme y patrones visuales existentes.
 - **Soporte grafico.** Se instalo `react-native-svg` para renderizar el donut chart en React

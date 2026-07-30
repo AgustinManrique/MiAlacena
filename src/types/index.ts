@@ -85,6 +85,13 @@ export interface ConsumptionCategoryStat {
   color: string;
   consumptionCount: number;
   percentage: number;
+  products: ConsumptionProductStat[];
+}
+
+export interface ConsumptionProductStat {
+  productId: string;
+  productName: string;
+  consumptionCount: number;
 }
 
 export interface ConsumptionStatsMonth {
