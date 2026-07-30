@@ -28,7 +28,7 @@
 ## Entrega 3 (Pendiente)
 
 - [ ] Escáner de código de barras (EAN/UPC)
-- [ ] Estadísticas de consumo
+- [x] Estadísticas de consumo
 - [ ] Sistema de recetas inteligentes
 - [ ] Notificaciones push
 - [ ] Testing (unit + integration)

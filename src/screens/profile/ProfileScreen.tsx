@@ -15,6 +15,7 @@ import { useAuthStore } from '../../stores/auth.store';
 import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { useShoppingStore } from '../../stores/shopping.store';
+import { useConsumptionStatsStore } from '../../stores/consumptionStats.store';
 import { Button, Card } from '../../components/ui';
 import { colors, fontSize, spacing, borderRadius } from '../../theme';
 
@@ -33,6 +34,7 @@ export function ProfileScreen() {
   } = useHouseStore();
   const resetProducts = useProductStore((s) => s.reset);
   const resetShopping = useShoppingStore((s) => s.reset);
+  const resetConsumptionStats = useConsumptionStatsStore((s) => s.reset);
 
   const isCurrentUserAdmin = members.some(
     (m) => m.user_id === currentUserId && m.role === 'admin'
@@ -55,6 +57,7 @@ export function ProfileScreen() {
           resetHouse();
           resetProducts();
           resetShopping();
+          resetConsumptionStats();
           await signOut();
         },
       },

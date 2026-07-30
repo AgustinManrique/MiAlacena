@@ -73,6 +73,18 @@ CREATE TABLE IF NOT EXISTS shopping_items (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS consumption_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  house_id UUID NOT NULL REFERENCES houses(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+  category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+  quantity_consumed NUMERIC NOT NULL CHECK (quantity_consumed > 0),
+  consumed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  reference_month INT NOT NULL CHECK (reference_month BETWEEN 1 AND 12),
+  reference_year INT NOT NULL CHECK (reference_year >= 2000),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS todos (
   id BIGSERIAL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -91,6 +103,11 @@ CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
 CREATE INDEX IF NOT EXISTS idx_shopping_items_house ON shopping_items(house_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_items_purchased ON shopping_items(is_purchased);
 CREATE INDEX IF NOT EXISTS idx_categories_house ON categories(house_id);
+CREATE INDEX IF NOT EXISTS idx_consumption_events_house_month
+  ON consumption_events(house_id, reference_year, reference_month);
+CREATE INDEX IF NOT EXISTS idx_consumption_events_category ON consumption_events(category_id);
+CREATE INDEX IF NOT EXISTS idx_consumption_events_product ON consumption_events(product_id);
+CREATE INDEX IF NOT EXISTS idx_consumption_events_consumed_at ON consumption_events(consumed_at);
 
 -- ============================================================
 -- ROW LEVEL SECURITY
@@ -102,6 +119,7 @@ ALTER TABLE house_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consumption_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
@@ -248,6 +266,18 @@ CREATE POLICY "Members can update shopping items"
 DROP POLICY IF EXISTS "Members can delete shopping items" ON shopping_items;
 CREATE POLICY "Members can delete shopping items"
   ON shopping_items FOR DELETE USING (is_house_member(house_id));
+
+-- ============================================================
+-- POLICIES: consumption_events
+-- ============================================================
+
+DROP POLICY IF EXISTS "Members can view consumption events" ON consumption_events;
+CREATE POLICY "Members can view consumption events"
+  ON consumption_events FOR SELECT USING (is_house_member(house_id));
+
+DROP POLICY IF EXISTS "Members can insert consumption events" ON consumption_events;
+CREATE POLICY "Members can insert consumption events"
+  ON consumption_events FOR INSERT WITH CHECK (is_house_member(house_id));
 
 -- ============================================================
 -- POLICIES: todos (lectura pública)

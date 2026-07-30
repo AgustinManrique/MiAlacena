@@ -1,0 +1,176 @@
+DOCUMENTACION FUNCIONAL Y TECNICA
+ESTADISTICAS DE CONSUMO
+
+Proyecto: MiAlacena
+Fecha: 2026-07-29
+Estado: implementado con base de datos como fuente de datos
+
+1. Objetivo
+
+Estadisticas de Consumo muestra cuantos consumos se registraron por categoria durante cada mes.
+Un consumo ocurre cuando la cantidad de un producto baja en el inventario. Por ejemplo, si un
+producto pasa de 2 unidades a 1, se registra 1 consumo para la categoria de ese producto.
+
+La seccion se muestra al final de la pantalla Inicio y no modifica el comportamiento existente
+del dashboard.
+
+2. Cambio de criterio
+
+La funcionalidad ya no muestra montos ni gasto mensual.
+
+Ahora muestra:
+
+- Total de consumos del mes.
+- Cantidad de consumos por categoria.
+- Porcentaje de cada categoria sobre el total mensual.
+- Navegacion entre meses con datos.
+
+3. Fuente de datos
+
+La fuente de datos es la tabla consumption_events en Supabase.
+
+No se usa informacion hardcodeada para calcular las estadisticas.
+
+4. Tabla consumption_events
+
+Campos principales:
+
+- id: identificador unico del evento.
+- house_id: casa a la que pertenece el consumo.
+- product_id: producto decrementado.
+- category_id: categoria del producto al momento del consumo.
+- quantity_consumed: cantidad consumida.
+- consumed_at: fecha y hora del consumo.
+- reference_month: mes numerico usado para consultas mensuales.
+- reference_year: anio usado para consultas mensuales.
+- created_at: fecha de creacion del registro.
+
+Indices agregados:
+
+- house_id + reference_year + reference_month.
+- category_id.
+- product_id.
+- consumed_at.
+
+RLS:
+
+- Los miembros de una casa pueden ver eventos de consumo de esa casa.
+- Los miembros de una casa pueden insertar eventos de consumo de esa casa.
+
+5. Buffer de confirmacion
+
+Para evitar registrar decrementos accidentales, los consumos no se persisten inmediatamente.
+
+Flujo:
+
+1. El usuario decrementa un producto.
+2. ProductStore actualiza la cantidad de forma optimista como ya lo hacia.
+3. consumptionBufferService detecta la baja de quantity.
+4. Se crea un consumo pendiente en memoria por producto.
+5. Se espera un buffer de 5 segundos.
+6. Si el usuario incrementa el producto durante ese intervalo, el consumo pendiente se cancela
+   total o parcialmente.
+7. Si el buffer vence sin reversion suficiente, se confirma el consumo.
+8. El evento se encola en el sync engine y se persiste en Supabase.
+9. Las estadisticas se recargan desde la base de datos.
+
+Ejemplos:
+
+- 2 -> 1: se agenda 1 consumo.
+- 2 -> 1 -> 2 dentro del buffer: se cancela el consumo.
+- 5 -> 3: se agendan 2 consumos.
+- 5 -> 3 -> 4 dentro del buffer: queda 1 consumo pendiente.
+
+6. Integracion con arquitectura existente
+
+Archivos principales:
+
+- src/services/consumptionBuffer.service.ts
+- src/services/consumptionStats.service.ts
+- src/stores/consumptionStats.store.ts
+- src/components/home/ConsumptionStatsSection.tsx
+- src/screens/home/HomeScreen.tsx
+- src/stores/product.store.ts
+- src/stores/sync.store.ts
+- src/lib/syncEngine.ts
+
+El registro de consumos se integra con la cola de sincronizacion existente mediante la mutacion:
+
+consumption.create
+
+Esto mantiene el patron ya utilizado por productos y lista de compras.
+
+7. Calculo de estadisticas
+
+consumptionStatsService consulta consumption_events filtrando por house_id.
+
+Luego agrupa en memoria por:
+
+- reference_year
+- reference_month
+- category
+
+Para cada mes calcula:
+
+- totalConsumptions
+- consumptionCount por categoria
+- percentage por categoria
+
+La UI recibe una lista de ConsumptionStatsMonth lista para renderizar.
+
+8. UI
+
+ConsumptionStatsSection muestra:
+
+- Titulo: Estadisticas de Consumo.
+- Subtitulo: Consumos mensuales por categoria.
+- Selector de mes anterior/siguiente.
+- Donut chart basado en cantidad de consumos.
+- Total de consumos en el centro.
+- Lista de categorias con icono, nombre, cantidad y porcentaje.
+- Categorias expandibles/colapsables.
+- Listado de productos consumidos por categoria al expandir, con nombre y cantidad consumida
+  durante el mes seleccionado.
+- Estado vacio si no hay consumos registrados.
+- Estado de carga mientras se consultan las estadisticas.
+
+La expansion de categorias se maneja como estado local de la interfaz. Cambiar el estado
+expandido no dispara nuevas consultas ni modifica las estadisticas generales.
+
+9. Detalle por producto
+
+La consulta de estadisticas trae en una sola lectura los eventos de consumo junto con sus
+relaciones de categoria y producto.
+
+El servicio agrupa la informacion por:
+
+- Mes.
+- Categoria.
+- Producto dentro de cada categoria.
+
+Esto evita consultas redundantes al abrir o cerrar una categoria. El acordeon solo muestra u
+oculta datos que ya fueron calculados para el mes seleccionado.
+
+10. Datos de prueba
+
+Se agrego el archivo:
+
+supabase_seed_consumption_events.sql
+
+El script:
+
+- Toma una casa existente.
+- Usa sus categorias existentes.
+- Crea productos demo por categoria solo si una categoria no tiene productos.
+- Inserta eventos de consumo para los ultimos tres meses.
+- Distribuye cantidades entre categorias.
+- Usa IDs deterministas con uuid_generate_v5.
+- Es idempotente mediante ON CONFLICT DO NOTHING.
+
+11. Consideraciones futuras
+
+- Agregar filtros por categoria.
+- Mostrar comparacion con el mes anterior.
+- Registrar usuario que produjo el consumo.
+- Agregar tests unitarios para el buffer.
+- Evaluar persistencia local de consumos pendientes si la app se cierra antes de vencer el buffer.

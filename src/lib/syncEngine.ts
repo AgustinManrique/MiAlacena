@@ -2,6 +2,8 @@ import NetInfo from '@react-native-community/netinfo';
 import { useSyncStore, PendingMutation, NewMutation } from '../stores/sync.store';
 import { productService } from '../services/product.service';
 import { shoppingService } from '../services/shopping.service';
+import { consumptionStatsService } from '../services/consumptionStats.service';
+import { useConsumptionStatsStore } from '../stores/consumptionStats.store';
 
 const MAX_RETRIES = 5;
 let processing = false;
@@ -38,6 +40,10 @@ async function replay(m: PendingMutation): Promise<void> {
       break;
     case 'shopping.clearPurchased':
       await shoppingService.clearPurchased(m.payload.houseId);
+      break;
+    case 'consumption.create':
+      await consumptionStatsService.createConsumptionEvent(m.payload.event);
+      await useConsumptionStatsStore.getState().loadMonthlyStats(m.payload.event.house_id);
       break;
   }
 }
