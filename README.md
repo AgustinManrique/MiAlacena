@@ -16,16 +16,114 @@ Eliminar la incertidumbre sobre productos disponibles en el hogar y evitar compr
 
 ---
 
-## Stack Tecnológico
+## Características principales
 
-| Tecnología | Justificación |
-|---|---|
-| **React Native + Expo** | Framework cross-platform maduro. Expo simplifica el build pipeline y provee acceso a APIs nativas sin configuración manual. |
-| **TypeScript** | Tipado estático para prevenir errores en tiempo de compilación y mejorar la documentación del código. |
-| **Supabase** | BaaS con PostgreSQL, autenticación, Row Level Security y Realtime subscriptions. Reemplaza un backend completo. |
-| **Zustand** | Estado global ligero (2KB), sin boilerplate, con excelente soporte TypeScript y selectores optimizados. |
-| **React Navigation v7** | Librería de navegación estándar de React Native, con stack y tabs nativos. |
-| **AsyncStorage** | Persistencia local para sesión y datos offline. |
+- Gestión colaborativa de múltiples hogares.
+- Inventario compartido sincronizado en tiempo real.
+- Gestión de categorías y productos.
+- Lista de compras automática basada en stock mínimo.
+- Lista de compras manual.
+- Escaneo de códigos de barras (EAN/UPC) utilizando Open Food Facts.
+- Estadísticas de consumo mensuales.
+- Recomendación inteligente de recetas utilizando TheMealDB.
+- Administración de perfil y configuración de la casa.
+- Invitación de miembros mediante código único.
+- Arquitectura desacoplada utilizando servicios y Zustand.
+- Base de datos PostgreSQL administrada mediante Supabase.
+
+---
+
+## Capturas de pantalla
+
+> Agregar imágenes en `docs/screenshots/`.
+
+| Inicio | Inventario |
+|--------------|--------------|
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/inventory.png) |
+
+| Recetas | Perfil |
+|--------------|--------------|
+|![](docs/screenshots/recipes.png) | ![](docs/screenshots/profile.png) |
+
+---
+
+## Instalación
+
+### Requisitos
+
+- Node.js 20 LTS
+- npm 10+
+- Expo SDK 54
+- Android Studio o Expo Go
+- Cuenta de Supabase
+
+### 1. Clonar el proyecto
+
+```bash
+git clone https://github.com/usuario/MiAlacena.git
+cd MiAlacena
+```
+
+### 2. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 3. Configurar Supabase
+
+Crear un proyecto en Supabase y ejecutar los siguientes scripts SQL en el SQL Editor:
+
+```
+supabase_schema.sql
+supabase_seed.sql (opcional)
+supabase_seed_consumption_events.sql (opcional)
+```
+
+### 4. Variables de entorno
+
+Crear el archivo `.env`:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+EXPO_PUBLIC_SUPABASE_KEY=tu-anon-key
+```
+
+### 5. Ejecutar la aplicación
+
+```bash
+npx expo start
+```
+
+o
+
+```bash
+npx expo start --android
+```
+
+```bash
+npx expo start --ios
+```
+
+```bash
+npx expo start --web
+```
+
+---
+
+## Tecnologías utilizadas
+
+- React Native
+- Expo
+- TypeScript
+- Supabase
+- PostgreSQL
+- Zustand
+- React Navigation
+- React Native SVG
+- Expo Camera
+- Open Food Facts API
+- TheMealDB API
 
 ### Versiones Mínimas
 - **Android**: API 23 (Android 6.0)
@@ -37,39 +135,88 @@ Eliminar la incertidumbre sobre productos disponibles en el hogar y evitar compr
 
 ```
 MiAlacena/
-├── src/
-│   ├── types/              # Interfaces y tipos TypeScript
-│   │   └── index.ts
-│   ├── config/             # Configuración (supabase.ts re-exporta desde utils/)
-│   │   ├── supabase.ts
-│   │   └── constants.ts
-│   ├── services/           # Capa de acceso a datos (Supabase queries)
-│   │   ├── auth.service.ts
-│   │   ├── house.service.ts
-│   │   ├── product.service.ts
-│   │   ├── category.service.ts
-│   │   └── shopping.service.ts
-│   ├── stores/             # Estado global (Zustand)
-│   │   ├── auth.store.ts
-│   │   ├── house.store.ts
-│   │   ├── product.store.ts
-│   │   └── shopping.store.ts
-│   ├── components/         # Componentes reutilizables
-│   │   ├── ui/             # Design system (Button, Input, Card, etc.)
-│   │   ├── inventory/      # Componentes de inventario
-│   │   └── shopping/       # Componentes de lista de compras
-│   ├── screens/            # Pantallas organizadas por feature
-│   │   ├── auth/
-│   │   ├── home/
-│   │   ├── inventory/
-│   │   ├── shopping/
-│   │   └── profile/
-│   ├── navigation/         # Navegación (Root + Tabs)
-│   │   ├── RootNavigator.tsx
-│   │   └── MainTabs.tsx
-│   ├── theme/              # Design tokens (colores, spacing, tipografía)
-│   │   └── index.ts
-│   └── utils/              # Utilidades generales
+src
+ ├ components
+ │ ├ barcode
+ │ │ └ ScanCameraButton.tsx
+ │ ├ home
+ │ │ └ ConsumptionStatsSection.tsx
+ │ ├ inventory
+ │ │ ├ CategoryFilter.tsx
+ │ │ └ ProductCard.tsx
+ │ ├ shopping
+ │ │ └ ShoppingItemCard.tsx
+ │ └ ui
+ │ │ ├ Button.tsx
+ │ │ ├ Card.tsx
+ │ │ ├ EmptyState.tsx
+ │ │ ├ index.ts
+ │ │ ├ Input.tsx
+ │ │ ├ PressableScale.tsx
+ │ │ ├ QuantityStepper.tsx
+ │ │ ├ SearchBar.tsx
+ │ │ ├ StatusBadge.tsx
+ │ │ └ SyncStatusBadge.tsx
+ ├ config
+ │ ├ constants.ts
+ │ └ supabase.ts
+ ├ data
+ ├ hooks
+ │ └ useSyncEngine.ts
+ ├ lib
+ │ ├ storage.ts
+ │ ├ syncEngine.ts
+ │ └ uuid.ts
+ ├ navigation
+ │ ├ MainTabs.tsx
+ │ └ RootNavigator.tsx
+ ├ screens
+ │ ├ auth
+ │ │ ├ LoginScreen.tsx
+ │ │ └ RegisterScreen.tsx
+ │ ├ home
+ │ │ ├ HomeScreen.tsx
+ │ │ └ HouseSetupScreen.tsx
+ │ ├ inventory
+ │ │ ├ AddProductScreen.tsx
+ │ │ ├ BarcodeScannerScreen.tsx
+ │ │ ├ EditProductScreen.tsx
+ │ │ ├ InventoryScreen.tsx
+ │ │ └ ProductDetailScreen.tsx
+ │ ├ profile
+ │ │ └ ProfileScreen.tsx
+ │ ├ recipes
+ │ │ ├ RecipeDetailScreen.tsx
+ │ │ └ RecipesScreen.tsx
+ │ ├ settings
+ │ │ └ SettingsScreen.tsx
+ │ └ shopping
+ │ │ └ ShoppingScreen.tsx
+ ├ services
+ │ ├ auth.service.ts
+ │ ├ barcode.service.ts
+ │ ├ category.service.ts
+ │ ├ consumptionBuffer.service.ts
+ │ ├ consumptionStats.service.ts
+ │ ├ house.service.ts
+ │ ├ product.service.ts
+ │ ├ recipe.service.ts
+ │ ├ shopping.service.ts
+ │ └ shoppingSync.service.ts
+ ├ stores
+ │ ├ auth.store.ts
+ │ ├ consumptionStats.store.ts
+ │ ├ house.store.ts
+ │ ├ product.store.ts
+ │ ├ shopping.store.ts
+ │ └ sync.store.ts
+ ├ theme
+ │ └ index.ts
+ ├ types
+ │ └ index.ts
+ └ utils
+ │ └ validation.ts
+
 ├── utils/                  # Utilidades compartidas (cliente Supabase, helpers)
 │   └── supabase.ts
 ├── docs/                   # Documentación extendida
@@ -93,12 +240,14 @@ MiAlacena/
 
 | Entidad | Descripción |
 |---|---|
-| **House** | Hogar compartido con código de invitación |
-| **UserProfile** | Perfil del usuario (nombre, email, avatar) |
-| **HouseMember** | Relación usuario-casa con rol (admin/member) |
-| **Category** | Categoría de productos (Lácteos, Carnes, etc.) |
-| **Product** | Producto del inventario con cantidad, stock mínimo y estado |
-| **ShoppingItem** | Item en la lista de compras (manual o automático) |
+| **House** | Representa un hogar compartido. Contiene el nombre de la casa y un código de invitación único para permitir que nuevos usuarios se unan al grupo. |
+| **UserProfile** | Almacena la información pública de cada usuario, incluyendo nombre, correo electrónico y avatar. Está vinculado a la autenticación de Supabase. |
+| **HouseMember** | Tabla de relación entre usuarios y hogares. Define qué usuarios pertenecen a cada casa y el rol que poseen (`admin` o `member`). |
+| **Category** | Categorías utilizadas para organizar los productos del inventario (Lácteos, Carnes, Verduras, Limpieza, etc.). Cada categoría pertenece a una casa y mantiene un orden de visualización. |
+| **Product** | Representa un producto del inventario. Almacena nombre, categoría, cantidad disponible, unidad de medida, stock mínimo, estado (OK, Bajo o Agotado) y la información necesaria para su gestión. |
+| **ShoppingItem** | Elemento de la lista de compras. Puede crearse manualmente por un usuario o automáticamente cuando un producto alcanza el stock mínimo definido. |
+| **ConsumptionEvent** | Registra cada consumo confirmado de un producto del inventario. Almacena la casa, producto, categoría, cantidad consumida, fecha del evento y el mes y año de referencia para generar estadísticas de consumo. |
+| **PushToken** | Almacena los tokens de notificaciones push de cada dispositivo móvil asociados a un usuario, permitiendo el envío de notificaciones mediante Expo Push Notifications. |
 
 ### Reglas de Negocio
 
@@ -114,31 +263,6 @@ MiAlacena/
 - **Row Level Security (RLS)**: Cada tabla tiene políticas que restringen acceso solo a miembros de la casa.
 - **Autenticación**: Email/password con Supabase Auth. Tokens JWT con refresh automático.
 - **Persistencia segura**: Sesión almacenada en AsyncStorage con token refresh.
-
----
-
-## Setup
-
-### Requisitos
-- **Node.js 20 LTS**
-- Cuenta en [Supabase](https://supabase.com)
-
-### Instalación
-
-```bash
-# 1. Clonar e instalar dependencias
-npm install
-
-# 2. Crear proyecto en supabase.com y ejecutar supabase_schema.sql en SQL Editor
-
-# 3. Crear archivo .env con las credenciales
-echo 'EXPO_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co' > .env
-echo 'EXPO_PUBLIC_SUPABASE_KEY=tu-anon-key' >> .env
-
-# 4. Ejecutar
-npx expo start           # QR para Expo Go en el celular
-npx expo start --web     # Navegador en http://localhost:8081
-```
 
 ---
 
@@ -162,6 +286,46 @@ rm -rf node_modules package-lock.json && npm install
 
 ---
 
+## Créditos
+
+Proyecto desarrollado como trabajo académico para la asignatura **Desarrollo de Aplicaciones Moviles** de la **Universidad Tecnológica Nacional - Facultad Regional La Plata (UTN-FRLP)**.
+
+### Integrantes
+
+- Manrique Agustín
+- Noval Leandro 
+- Siadore Valentino 
+- Trebino Figueroa Eric
+
+### APIs utilizadas
+
+- Open Food Facts
+- TheMealDB
+
+### Librerías principales
+
+- React Native
+- Expo
+- Supabase
+- Zustand
+- React Navigation
+- React Native SVG
+
+---
+
+## Trabajo futuro
+
+- Notificaciones Push.
+- Predicción inteligente de consumo.
+- Dashboard avanzado.
+- Exportación de estadísticas.
+- Integración con supermercados.
+- Modo offline completo.
+
+---
+
 ## Licencia
 
-Proyecto académico - Todos los derechos reservados.
+Proyecto desarrollado con fines académicos.
+
+Todos los derechos reservados.

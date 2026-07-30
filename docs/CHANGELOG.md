@@ -5,28 +5,22 @@ Todos los cambios notables de **MiAlacena** se documentan en este archivo.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el proyecto
 adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
-## [1.2.0] - 2026-07-29 - Entrega 3 parcial
+## [1.2.0] - 2026-07-29 - Entrega 3 final
 
 ### Añadido
 
-- **Estadisticas de consumo en Inicio.** Se agrego una seccion al final del dashboard con
-  cantidad mensual de consumos, selector de mes, grafico circular tipo donut, total de consumos
-  en el centro y desglose por categoria con cantidad y porcentaje.
-- **Eventos reales de consumo.** Se agrego la tabla `consumption_events` en Supabase para
-  registrar decrementos confirmados del inventario por casa, producto, categoria, mes y anio.
-- **Buffer de confirmacion.** Los decrementos del inventario se registran como consumo solo si
-  no son revertidos dentro del intervalo de confirmacion.
-- **Servicio de estadisticas.** Se agrego `consumptionStatsService`, que consulta
-  `consumption_events`, agrupa por mes/categoria y calcula totales y porcentajes.
-- **Detalle expandible por categoria.** Cada categoria de estadisticas ahora funciona como
-  acordeon y muestra los productos consumidos en el mes seleccionado, junto con su cantidad
-  total consumida.
-- **Componente reutilizable.** Se agrego `ConsumptionStatsSection` en `src/components/home/`,
-  manteniendo el uso de `Card`, tokens del theme y patrones visuales existentes.
-- **Soporte grafico.** Se instalo `react-native-svg` para renderizar el donut chart en React
-  Native/Expo.
-- **Datos SQL de prueba.** Se agrego `supabase_seed_consumption_events.sql` para poblar consumos
-  de los ultimos tres meses en una casa existente.
+- **Estadísticas de consumo en Inicio.** Se agregó una sección al final del dashboard con la cantidad mensual de consumos, selector de mes, gráfico circular tipo donut, total de consumos en el centro y desglose por categoría con cantidad y porcentaje.
+- **Eventos reales de consumo.** Se agregó la tabla `consumption_events` en Supabase para registrar decrementos confirmados del inventario por casa, producto, categoría, mes y año.
+- **Buffer de confirmación.** Los decrementos del inventario se registran como consumo solo si no son revertidos dentro del intervalo de confirmación.
+- **Servicio de estadísticas.** Se agregó `consumptionStatsService`, que consulta `consumption_events`, agrupa por mes/categoría y calcula totales, porcentajes y detalle por producto.
+- **Detalle expandible por categoría.** Cada categoría de estadísticas ahora funciona como acordeón y muestra los productos consumidos en el mes seleccionado junto con su cantidad total consumida.
+- **Componente reutilizable.** Se agregó `ConsumptionStatsSection` en `src/components/home/`, manteniendo el uso de `Card`, tokens del tema y patrones visuales existentes.
+- **Soporte gráfico.** Se instaló `react-native-svg` para renderizar el gráfico circular tipo donut en React Native/Expo.
+- **Datos SQL de prueba.** Se agregó `supabase_seed_consumption_events.sql` para poblar eventos de consumo de los últimos tres meses en todas las casas existentes.
+- **Escáner de código de barras.** Se incorporó un lector de códigos EAN/UPC utilizando la cámara del dispositivo, con integración a Open Food Facts para obtener automáticamente información del producto y precargar los datos durante el alta.
+- **Edición de perfil y casa.** Se añadió una pantalla de configuración que permite modificar el nombre de usuario, el nombre de la casa y el código de invitación, aplicando actualizaciones optimistas en memoria para mejorar la respuesta de la interfaz.
+- **Refactor visual del Home.** Se homogeneizó el diseño del banner principal de la pantalla de inicio para alinearlo con la identidad visual y los componentes utilizados en el resto de las pestañas de la aplicación.
+- **Sistema de Recetas Inteligentes.** Se implementó un módulo conectado al inventario actual que consulta TheMealDB para recomendar recetas dinámicamente. El sistema traduce términos comunes en español al inglés para realizar las búsquedas, mostrando el nombre de la receta, su imagen y el detalle completo de ingredientes e instrucciones, sin necesidad de almacenar un catálogo local de recetas. Como limitación de la API utilizada, las instrucciones se presentan en inglés.
 
 
 ## [1.1.0] - 2026-06-23 — Entrega 2
