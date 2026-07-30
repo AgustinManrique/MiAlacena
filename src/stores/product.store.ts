@@ -9,6 +9,7 @@ import { enqueueMutation } from '../lib/syncEngine';
 import { useSyncStore } from './sync.store';
 import { useShoppingStore } from './shopping.store';
 import { useAuthStore } from './auth.store';
+import { consumptionBufferService } from '../services/consumptionBuffer.service';
 
 function computeStatus(quantity: number, minStock: number): ProductStatus {
   if (quantity <= 0) return 'out';
@@ -125,6 +126,7 @@ export const useProductStore = create<ProductState>()(
       },
 
       updateProduct: async (productId, updates) => {
+        const previous = get().products.find((p) => p.id === productId);
         let updated: Product | undefined;
         set((state) => ({
           products: state.products.map((p) => {
@@ -140,6 +142,9 @@ export const useProductStore = create<ProductState>()(
         }));
         enqueueMutation({ type: 'product.update', payload: { productId, updates } });
         if (updated) await syncShopping(updated);
+        if (previous && updated && typeof updates.quantity === 'number') {
+          consumptionBufferService.handleQuantityChange(previous, updated);
+        }
       },
 
       updateQuantity: async (productId, newQuantity) => {

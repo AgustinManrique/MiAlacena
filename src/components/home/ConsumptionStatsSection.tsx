@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Card } from '../ui';
@@ -7,6 +7,7 @@ import { borderRadius, colors, fontSize, spacing } from '../../theme';
 
 interface ConsumptionStatsSectionProps {
   months: ConsumptionStatsMonth[];
+  isLoading?: boolean;
 }
 
 const DONUT_SIZE = 184;
@@ -14,27 +15,31 @@ const STROKE_WIDTH = 22;
 const RADIUS = (DONUT_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(value);
+function formatConsumptions(value: number) {
+  return `${value} consumo${value === 1 ? '' : 's'}`;
 }
 
-export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps) {
+export function ConsumptionStatsSection({
+  months,
+  isLoading = false,
+}: ConsumptionStatsSectionProps) {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(
     Math.max(months.length - 1, 0)
   );
 
+  useEffect(() => {
+    setSelectedMonthIndex(Math.max(months.length - 1, 0));
+  }, [months.length]);
+
   const selectedMonth = months[selectedMonthIndex];
 
   const segments = useMemo(() => {
-    if (!selectedMonth || selectedMonth.totalAmount <= 0) return [];
+    if (!selectedMonth || selectedMonth.totalConsumptions <= 0) return [];
 
     let accumulated = 0;
     return selectedMonth.categories.map((category) => {
-      const length = (category.amount / selectedMonth.totalAmount) * CIRCUMFERENCE;
+      const length =
+        (category.consumptionCount / selectedMonth.totalConsumptions) * CIRCUMFERENCE;
       const segment = {
         ...category,
         strokeDasharray: `${length} ${CIRCUMFERENCE - length}`,
@@ -48,9 +53,11 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
   if (!selectedMonth) {
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Estadísticas de Consumo</Text>
+        <Text style={styles.sectionTitle}>Estadisticas de Consumo</Text>
         <Card style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No hay estadísticas disponibles</Text>
+          <Text style={styles.emptyText}>
+            {isLoading ? 'Cargando estadisticas...' : 'No hay consumos registrados'}
+          </Text>
         </Card>
       </View>
     );
@@ -63,8 +70,8 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
     <View style={styles.section}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.sectionTitle}>Estadísticas de Consumo</Text>
-          <Text style={styles.sectionSubtitle}>Resumen mensual por categoría</Text>
+          <Text style={styles.sectionTitle}>Estadisticas de Consumo</Text>
+          <Text style={styles.sectionSubtitle}>Consumos mensuales por categoria</Text>
         </View>
       </View>
 
@@ -75,8 +82,13 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
             onPress={() => setSelectedMonthIndex((index) => Math.max(index - 1, 0))}
             disabled={!canGoPrevious}
           >
-            <Text style={[styles.monthButtonText, !canGoPrevious && styles.monthButtonTextDisabled]}>
-              ‹
+            <Text
+              style={[
+                styles.monthButtonText,
+                !canGoPrevious && styles.monthButtonTextDisabled,
+              ]}
+            >
+              {'<'}
             </Text>
           </TouchableOpacity>
 
@@ -89,8 +101,13 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
             }
             disabled={!canGoNext}
           >
-            <Text style={[styles.monthButtonText, !canGoNext && styles.monthButtonTextDisabled]}>
-              ›
+            <Text
+              style={[
+                styles.monthButtonText,
+                !canGoNext && styles.monthButtonTextDisabled,
+              ]}
+            >
+              {'>'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -125,7 +142,10 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
           </Svg>
           <View style={styles.donutCenter}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalAmount}>{formatCurrency(selectedMonth.totalAmount)}</Text>
+            <Text style={styles.totalAmount}>{selectedMonth.totalConsumptions}</Text>
+            <Text style={styles.totalCaption}>
+              consumo{selectedMonth.totalConsumptions === 1 ? '' : 's'}
+            </Text>
           </View>
         </View>
 
@@ -141,7 +161,9 @@ export function ConsumptionStatsSection({ months }: ConsumptionStatsSectionProps
                   <Text style={styles.categoryPercentage}>{category.percentage}% del total</Text>
                 </View>
               </View>
-              <Text style={styles.categoryAmount}>{formatCurrency(category.amount)}</Text>
+              <Text style={styles.categoryAmount}>
+                {formatConsumptions(category.consumptionCount)}
+              </Text>
             </View>
           ))}
         </View>
@@ -189,10 +211,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceVariant,
   },
   monthButtonText: {
-    fontSize: 26,
-    lineHeight: 30,
+    fontSize: 20,
+    lineHeight: 24,
     color: colors.primaryDark,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   monthButtonTextDisabled: {
     color: colors.textLight,
@@ -217,9 +239,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   totalAmount: {
-    fontSize: fontSize.xl,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
     color: colors.text,
+  },
+  totalCaption: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   categoryList: {
     gap: spacing.sm,

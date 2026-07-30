@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { asyncStorage } from '../lib/storage';
 import { uuidv4 } from '../lib/uuid';
-import { Product, ShoppingItem } from '../types';
+import { ConsumptionEvent, Product, ShoppingItem } from '../types';
 
 /**
  * Estado de sincronización que ve la UI.
@@ -25,7 +25,8 @@ export type NewMutation =
   | { type: 'shopping.add'; payload: { item: ShoppingItem } }
   | { type: 'shopping.setPurchased'; payload: { itemId: string; isPurchased: boolean; userId: string } }
   | { type: 'shopping.remove'; payload: { itemId: string } }
-  | { type: 'shopping.clearPurchased'; payload: { houseId: string } };
+  | { type: 'shopping.clearPurchased'; payload: { houseId: string } }
+  | { type: 'consumption.create'; payload: { event: ConsumptionEvent } };
 
 export type PendingMutation = NewMutation & {
   id: string;

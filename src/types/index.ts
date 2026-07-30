@@ -83,15 +83,28 @@ export interface ConsumptionCategoryStat {
   categoryName: string;
   icon: string;
   color: string;
-  amount: number;
+  consumptionCount: number;
   percentage: number;
 }
 
 export interface ConsumptionStatsMonth {
   monthId: string;
   monthLabel: string;
-  totalAmount: number;
+  referenceMonth: number;
+  referenceYear: number;
+  totalConsumptions: number;
   categories: ConsumptionCategoryStat[];
+}
+
+export interface ConsumptionEvent {
+  id: string;
+  house_id: string;
+  product_id: string;
+  category_id: string | null;
+  quantity_consumed: number;
+  consumed_at: string;
+  reference_month: number;
+  reference_year: number;
 }
 
 export type RootStackParamList = {

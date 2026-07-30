@@ -4,10 +4,9 @@ import { useAuthStore } from '../../stores/auth.store';
 import { useHouseStore } from '../../stores/house.store';
 import { useProductStore } from '../../stores/product.store';
 import { useShoppingStore } from '../../stores/shopping.store';
+import { useConsumptionStatsStore } from '../../stores/consumptionStats.store';
 import { Card } from '../../components/ui';
 import { ConsumptionStatsSection } from '../../components/home/ConsumptionStatsSection';
-import { consumptionStatsService } from '../../services/consumptionStats.service';
-import { ConsumptionStatsMonth } from '../../types';
 import { colors, fontSize, spacing, shadows } from '../../theme';
 
 export function HomeScreen() {
@@ -17,21 +16,20 @@ export function HomeScreen() {
   const loadProducts = useProductStore((s) => s.loadProducts);
   const shoppingItems = useShoppingStore((s) => s.items);
   const loadShoppingItems = useShoppingStore((s) => s.loadItems);
+  const consumptionStats = useConsumptionStatsStore((s) => s.months);
+  const loadConsumptionStats = useConsumptionStatsStore((s) => s.loadMonthlyStats);
+  const isLoadingConsumptionStats = useConsumptionStatsStore((s) => s.isLoading);
   const [refreshing, setRefreshing] = React.useState(false);
-  const [consumptionStats, setConsumptionStats] = React.useState<ConsumptionStatsMonth[]>([]);
 
   const lowStockProducts = products.filter((p) => p.status === 'low');
   const outOfStockProducts = products.filter((p) => p.status === 'out');
   const pendingShopping = shoppingItems.filter((i) => !i.is_purchased).length;
 
   useEffect(() => {
-    consumptionStatsService.getMonthlyStats().then(setConsumptionStats);
-  }, []);
-
-  useEffect(() => {
     if (currentHouse) {
       loadProducts(currentHouse.id);
       loadShoppingItems(currentHouse.id);
+      loadConsumptionStats(currentHouse.id);
     }
   }, [currentHouse?.id]);
 
@@ -41,6 +39,7 @@ export function HomeScreen() {
     await Promise.all([
       loadProducts(currentHouse.id),
       loadShoppingItems(currentHouse.id),
+      loadConsumptionStats(currentHouse.id),
     ]);
     setRefreshing(false);
   };
@@ -124,7 +123,10 @@ export function HomeScreen() {
         </View>
       )}
 
-      <ConsumptionStatsSection months={consumptionStats} />
+      <ConsumptionStatsSection
+        months={consumptionStats}
+        isLoading={isLoadingConsumptionStats}
+      />
 
       <View style={{ height: spacing.xxl }} />
     </ScrollView>

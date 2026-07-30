@@ -10,18 +10,20 @@ adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 ### Añadido
 
 - **Estadisticas de consumo en Inicio.** Se agrego una seccion al final del dashboard con
-  resumen mensual de consumo, selector de mes, grafico circular tipo donut, total gastado en el
-  centro y desglose por categoria con monto y porcentaje.
-- **Datos simulados desacoplados.** Se incorporo `src/data/estadisticas_julio.json` como fuente
-  hardcodeada temporal, con estructura mensual preparada para reemplazarse por consultas a base
-  de datos.
-- **Servicio de estadisticas.** Se agrego `consumptionStatsService`, que normaliza los datos del
-  JSON, calcula totales y porcentajes, y reutiliza nombres, colores e iconos desde
-  `DEFAULT_CATEGORIES`.
+  cantidad mensual de consumos, selector de mes, grafico circular tipo donut, total de consumos
+  en el centro y desglose por categoria con cantidad y porcentaje.
+- **Eventos reales de consumo.** Se agrego la tabla `consumption_events` en Supabase para
+  registrar decrementos confirmados del inventario por casa, producto, categoria, mes y anio.
+- **Buffer de confirmacion.** Los decrementos del inventario se registran como consumo solo si
+  no son revertidos dentro del intervalo de confirmacion.
+- **Servicio de estadisticas.** Se agrego `consumptionStatsService`, que consulta
+  `consumption_events`, agrupa por mes/categoria y calcula totales y porcentajes.
 - **Componente reutilizable.** Se agrego `ConsumptionStatsSection` en `src/components/home/`,
   manteniendo el uso de `Card`, tokens del theme y patrones visuales existentes.
 - **Soporte grafico.** Se instalo `react-native-svg` para renderizar el donut chart en React
   Native/Expo.
+- **Datos SQL de prueba.** Se agrego `supabase_seed_consumption_events.sql` para poblar consumos
+  de los ultimos tres meses en una casa existente.
 
 
 ## [1.1.0] - 2026-06-23 — Entrega 2
