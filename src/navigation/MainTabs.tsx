@@ -5,6 +5,7 @@ import { MainTabParamList } from '../types';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { InventoryScreen } from '../screens/inventory/InventoryScreen';
 import { ShoppingScreen } from '../screens/shopping/ShoppingScreen';
+import { RecipesScreen } from '../screens/recipes/RecipesScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { useShoppingStore } from '../stores/shopping.store';
 import { SyncStatusBadge } from '../components/ui/SyncStatusBadge';
@@ -16,6 +17,7 @@ const ICONS: Record<string, { active: string; inactive: string }> = {
   HomeTab: { active: '🏠', inactive: '🏡' },
   InventoryTab: { active: '📦', inactive: '📦' },
   ShoppingTab: { active: '🛒', inactive: '🛒' },
+  RecipesTab: { active: '🍳', inactive: '🍳' },
   ProfileTab: { active: '👤', inactive: '👤' },
 };
 
@@ -49,6 +51,7 @@ export function MainTabs() {
           tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
         }}
       />
+      <Tab.Screen name="RecipesTab" component={RecipesScreen} options={{ title: 'Recetas' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
